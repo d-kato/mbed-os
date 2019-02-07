@@ -5155,6 +5155,50 @@
             "network-default-interface-type": null
         }
     },
+    "RZ_A2XX": {
+        "inherits": ["Target"],
+        "core": "Cortex-A9",
+        "supported_toolchains": ["ARM", "GCC_ARM", "IAR"],
+        "extra_labels": ["RENESAS", "RZ_A2XX"],
+        "device_has": [
+            "SLEEP",
+            "USTICKER",
+            "RTC",
+            "ANALOGIN",
+            "I2C",
+            "I2CSLAVE",
+            "I2C_ASYNCH",
+            "INTERRUPTIN",
+            "PORTIN",
+            "PORTINOUT",
+            "PORTOUT",
+            "PWMOUT",
+            "SERIAL",
+            "SERIAL_ASYNCH",
+            "SERIAL_FC",
+            "SPI",
+            "SPISLAVE",
+            "SPI_ASYNCH",
+            "STDIO_MESSAGES"
+        ],
+        "program_cycle_s": 2
+    },
+    "RZ_A2M_EVB": {
+        "inherits": ["RZ_A2XX"],
+        "extra_labels_add": ["RZA2M", "MBRZA2M", "RZ_A2_EMAC"],
+        "device_has_add": ["EMAC", "FLASH"],
+        "release_versions": ["2", "5"],
+        "device_name": "R7S921053",
+        "bootloader_supported": true
+    },
+    "RZ_A2M_SBEV": {
+        "inherits": ["RZ_A2XX"],
+        "extra_labels_add": ["RZA2M", "MBRZA2M", "RZ_A2_EMAC"],
+        "device_has_add": ["EMAC", "FLASH"],
+        "release_versions": ["2", "5"],
+        "device_name": "R7S921053",
+        "bootloader_supported": true
+    },
     "MAXWSNENV": {
         "inherits": ["Target"],
         "core": "Cortex-M3",

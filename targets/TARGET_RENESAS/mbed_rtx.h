@@ -18,8 +18,6 @@
 
 #include <stdint.h>
 
-#if defined(TARGET_RZ_A1H) || defined(TARGET_VK_RZ_A1H) || defined(TARGET_GR_LYCHEE)
-
 #if defined(__CC_ARM)
     extern char Image$$ARM_LIB_STACK$$Base[];
     extern char Image$$ARM_LIB_STACK$$ZI$$Limit[];
@@ -42,7 +40,6 @@
     /* No region declarations needed */
 #else
     #error "no toolchain defined"
-#endif
 #endif
 
 #endif  // MBED_MBED_RTX_H
