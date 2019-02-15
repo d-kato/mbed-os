@@ -67,6 +67,15 @@ typedef enum {
     USBTX = P9_0,
     USBRX = P9_1,
 
+    A0 = P5_0,
+    A1 = P5_1,
+    A2 = P5_2,
+    A3 = P5_3,
+    A4 = P5_4,
+    A5 = P5_5,
+    A6 = P5_6,
+    A7 = P5_7,
+
     I2C_SCL = PD_6,
     I2C_SDA = PD_7,
 
