@@ -31,9 +31,9 @@
 #define USE_EXTAL_CLK
 #define RENESAS_RZ_A2_P0_CLK   CM0_RENESAS_RZ_A2_P0_CLK
 
-/* flash (MX25L25645GZNI-8G) */
+/* flash (MX25L6433FZNI-08G) */
 #define FLASH_BASE                 (0x20000000UL) /**< Flash Base Address */
-#define FLASH_SIZE                 (0x02000000UL) /**< Available Flash Memory */
+#define FLASH_SIZE                 (0x00800000UL) /**< Available Flash Memory */
 #define FLASH_PAGE_SIZE            256            /**< Flash Memory page size (interleaving off) */
                                                   /**< Maximum size per one writing is 256 byte and minimum size per one writing is 1 byte */
 #define FLASH_SECTOR_SIZE          4096           /**< Flash Memory sector size (interleaving off) */
