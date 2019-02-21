@@ -222,12 +222,14 @@ void RZ_A2_EMAC::recv_task(void)
 
     while (1) {
         sem_recv.wait();
+        while (1) {
+            /* (1) Retrieve the receive buffer location controlled by the  descriptor. */
+            ret = R_ETHER_Read_ZC2(_channel, (void **)&pread_buffer_address);
+            if (ret <= ETHER_NO_DATA) {
+                break;
+            }
 
-        /* (1) Retrieve the receive buffer location controlled by the  descriptor. */
-        ret = R_ETHER_Read_ZC2(_channel, (void **)&pread_buffer_address);
-
-        /* When there is data to receive */
-        if (ret > ETHER_NO_DATA) {
+            /* When there is data to receive */
             while (1) {
                 buf = memory_manager->alloc_heap(ret, 0);
                 if (buf != NULL) {
