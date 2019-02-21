@@ -19,12 +19,13 @@
 
 #include "EMAC.h"
 #include "rtos/Thread.h"
+#include "rtos/Semaphore.h"
 
 class RZ_A2_EMAC : public EMAC {
 public:
-    RZ_A2_EMAC();
+    RZ_A2_EMAC(uint32_t channel);
 
-    static RZ_A2_EMAC &get_instance();
+    static RZ_A2_EMAC &get_instance(uint32_t channel);
 
     /**
      * Return maximum transmission unit
@@ -149,24 +150,22 @@ public:
 
 private:
     EMACMemoryManager *memory_manager; /**< Memory manager */
+    uint32_t _channel;
     uint8_t hwaddr[6];
     bool hwaddr_set;
     bool power_on;
-    uint32_t channel;
     emac_link_input_cb_t emac_link_input_cb; /**< Callback for incoming data */
     emac_link_state_change_cb_t emac_link_state_cb; /**< Link state change callback */
     rtos::Thread recvThread;
     int phy_task_handle; /**< Handle for phy task event */
+    rtos::Semaphore sem_recv;
 
-    static void _callback(void*);
-    void callback(void*);
-#if(1)
-    static void _int_callback(void*);
-    void int_callback(void*);
-#endif
+    static void _callback_pcb(void*);
+    static void _callback_hnd(void*);
+    void callback_pcb(void*);
+    void callback_hnd(void*);
     void recv_task(void);
     void phy_task(void);
-
 };
 
 #endif /* RZ_A2_EMAC_H */

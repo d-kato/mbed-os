@@ -1,20 +1,20 @@
 /***********************************************************************************************************************
  * DISCLAIMER
- * This software is supplied by Renesas Electronics Corporation and is only intended for use with Renesas products. No 
- * other uses are authorized. This software is owned by Renesas Electronics Corporation and is protected under all 
- * applicable laws, including copyright laws. 
+ * This software is supplied by Renesas Electronics Corporation and is only intended for use with Renesas products. No
+ * other uses are authorized. This software is owned by Renesas Electronics Corporation and is protected under all
+ * applicable laws, including copyright laws.
  * THIS SOFTWARE IS PROVIDED "AS IS" AND RENESAS MAKES NO WARRANTIES REGARDING
- * THIS SOFTWARE, WHETHER EXPRESS, IMPLIED OR STATUTORY, INCLUDING BUT NOT LIMITED TO WARRANTIES OF MERCHANTABILITY, 
- * FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT. ALL SUCH WARRANTIES ARE EXPRESSLY DISCLAIMED. TO THE MAXIMUM 
- * EXTENT PERMITTED NOT PROHIBITED BY LAW, NEITHER RENESAS ELECTRONICS CORPORATION NOR ANY OF ITS AFFILIATED COMPANIES 
- * SHALL BE LIABLE FOR ANY DIRECT, INDIRECT, SPECIAL, INCIDENTAL OR CONSEQUENTIAL DAMAGES FOR ANY REASON RELATED TO THIS 
+ * THIS SOFTWARE, WHETHER EXPRESS, IMPLIED OR STATUTORY, INCLUDING BUT NOT LIMITED TO WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT. ALL SUCH WARRANTIES ARE EXPRESSLY DISCLAIMED. TO THE MAXIMUM
+ * EXTENT PERMITTED NOT PROHIBITED BY LAW, NEITHER RENESAS ELECTRONICS CORPORATION NOR ANY OF ITS AFFILIATED COMPANIES
+ * SHALL BE LIABLE FOR ANY DIRECT, INDIRECT, SPECIAL, INCIDENTAL OR CONSEQUENTIAL DAMAGES FOR ANY REASON RELATED TO THIS
  * SOFTWARE, EVEN IF RENESAS OR ITS AFFILIATES HAVE BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGES.
- * Renesas reserves the right, without notice, to make changes to this software and to discontinue the availability of 
- * this software. By using this software, you agree to the additional terms and conditions found by accessing the 
+ * Renesas reserves the right, without notice, to make changes to this software and to discontinue the availability of
+ * this software. By using this software, you agree to the additional terms and conditions found by accessing the
  * following link:
- * http://www.renesas.com/disclaimer 
+ * http://www.renesas.com/disclaimer
  *
- * Copyright (C) 2018 Renesas Electronics Corporation. All rights reserved.    
+ * Copyright (C) 2018 Renesas Electronics Corporation. All rights reserved.
  ***********************************************************************************************************************/
 /***********************************************************************************************************************
  * File Name    : r_ether_rza2.c
@@ -93,21 +93,21 @@ static descriptor_t * papp_tx_desc[ETHER_CHANNEL_MAX];
 /* Pointer to the callback function */
 static ether_cb_t cb_func;
 
-/* 
+/*
  * The flag which control the pause frame.
  *
  * The value of flag and the situation which is indicatived of by the value.
- * ETHER_FLAG_OFF (0): Don't use the pause frame (default). 
- * ETHER_FLAG_ON  (1): Use the pause frame. 
+ * ETHER_FLAG_OFF (0): Don't use the pause frame (default).
+ * ETHER_FLAG_ON  (1): Use the pause frame.
  */
 static uint8_t pause_frame_enable[ETHER_CHANNEL_MAX];
 
 /*
  * The flag indicatives of the state that the interrupt of Link Up/Down occur.
- * 
+ *
  * Value and state of flag
- * ETHER_FLAG_OFF (0): It is not possible to communicate. 
- * ETHER_FLAG_ON  (1): It is possible to communicate. 
+ * ETHER_FLAG_OFF (0): It is not possible to communicate.
+ * ETHER_FLAG_ON  (1): It is possible to communicate.
  */
 static uint8_t transfer_enable_flag[ETHER_CHANNEL_MAX];
 
@@ -115,11 +115,11 @@ static uint8_t transfer_enable_flag[ETHER_CHANNEL_MAX];
  * The flag indicatives of the state that the interrupt of magic packet detection occur.
  *
  * Value and state of flag
- * ETHER_FLAG_OFF (0): The interrupt of the magic packet detection has not been generated. 
- * ETHER_FLAG_ON  (1): The interrupt of the magic packet detection was generated. 
+ * ETHER_FLAG_OFF (0): The interrupt of the magic packet detection has not been generated.
+ * ETHER_FLAG_ON  (1): The interrupt of the magic packet detection was generated.
  *
  * If the R_ETHER_LinkProcess function is called, and the interrupt processing of the magic packet detection is done,
- * this flag becomes ETHER_FLAG_OFF(0). 
+ * this flag becomes ETHER_FLAG_OFF(0).
  */
 static uint8_t mpd_flag[ETHER_CHANNEL_MAX];
 
@@ -127,14 +127,14 @@ static uint8_t mac_addr_buf[ETHER_CHANNEL_MAX][6];
 
 /*
  * The flag indicatives of the state that the interrupt of Link Up/Down occur.
- * 
+ *
  * Value and state of flag
- * ETHER_FLAG_OFF         (0) : The Link up/down interrupt has not been generated. 
- * ETHER_FLAG_ON_LINK_OFF (2) : The Link down interrupt was generated. 
- * ETHER_FLAG_ON_LINK_ON  (3) : The Link up interrupt was generated. 
- * 
+ * ETHER_FLAG_OFF         (0) : The Link up/down interrupt has not been generated.
+ * ETHER_FLAG_ON_LINK_OFF (2) : The Link down interrupt was generated.
+ * ETHER_FLAG_ON_LINK_ON  (3) : The Link up interrupt was generated.
+ *
  * If the R_ETHER_LinkProcess function is called, and the interrupt processing of Link Up/Down is done,
- * this flag becomes ETHER_FLAG_OFF(0). 
+ * this flag becomes ETHER_FLAG_OFF(0).
  */
 static uint8_t lchng_flag[ETHER_CHANNEL_MAX];
 
@@ -187,9 +187,9 @@ static descriptor_t rx_descriptors[ETHER_CHANNEL_MAX][ETHER_CFG_EMAC_RX_DESCRIPT
 static descriptor_t tx_descriptors[ETHER_CHANNEL_MAX][ETHER_CFG_EMAC_TX_DESCRIPTORS] __attribute((section("NC_BSS"),aligned(32)));
 #endif
 
-/* 
+/*
  * As for Ethernet buffer, the size of total buffer which are use for transmission and the reception is secured.
- * The total buffer's size which the value is integrated from  EMAC_NUM_BUFFERS (buffer number) and 
+ * The total buffer's size which the value is integrated from  EMAC_NUM_BUFFERS (buffer number) and
  * ETHER_CFG_BUFSIZE (the size of one buffer).
  * The ETHER_CFG_BUFSIZE and EMAC_NUM_BUFFERS are defined by macro in the file "r_ether_private.h".
  * It is sequentially used from the head of the buffer as a receive buffer or a transmission buffer.
@@ -269,7 +269,7 @@ void R_ETHER_Initial (void)
  * Function Name: R_ETHER_Open_ZC2
  * Description  : After ETHERC, EDMAC,0x00000002; and PHY-LSI are reset in software, an auto negotiation of PHY-LSI is
  *                 begun.
- *                Afterwards, the link signal change interrupt is permitted. 
+ *                Afterwards, the link signal change interrupt is permitted.
  * Arguments    : channel -
  *                    ETHERC channel number
  *                mac_addr -
@@ -278,7 +278,7 @@ void R_ETHER_Initial (void)
  *                    Specifies whether flow control functionality is enabled or disabled.
  * Return Value : ETHER_SUCCESS -
  *                    Processing completed successfully
- *                ETHER_ERR_INVALID_CHAN - 
+ *                ETHER_ERR_INVALID_CHAN -
  *                    Nonexistent channel number
  *                ETHER_ERR_INVALID_PTR -
  *                    Value of the pointer is NULL
@@ -394,7 +394,7 @@ ether_return_t R_ETHER_Open_ZC2 (uint32_t channel, const uint8_t mac_addr[], uin
  *                    ETHERC channel number
  * Return Value : ETHER_SUCCESS -
  *                    Processing completed successfully
- *                ETHER_ERR_INVALID_CHAN - 
+ *                ETHER_ERR_INVALID_CHAN -
  *                    Nonexistent channel number
  ***********************************************************************************************************************/
 ether_return_t R_ETHER_Close_ZC2 (uint32_t channel)
@@ -459,11 +459,11 @@ ether_return_t R_ETHER_Close_ZC2 (uint32_t channel)
  * Return Value : Returns the number of bytes received.
  *                ETHER_NO_DATA -
  *                    A zero value indicates no data is received.
- *                ETHER_ERR_INVALID_CHAN - 
+ *                ETHER_ERR_INVALID_CHAN -
  *                    Nonexistent channel number
  *                ETHER_ERR_INVALID_PTR -
  *                    Value of the pointer is NULL
- *                ETHER_ERR_LINK - 
+ *                ETHER_ERR_LINK -
  *                    Auto-negotiation is not completed, and reception is not enabled.
  *                ETHER_ERR_MPDE -
  *                    As a Magic Packet is being detected, transmission and reception is not enabled.
@@ -476,6 +476,7 @@ int32_t R_ETHER_Read_ZC2 (uint32_t channel, void **pbuf)
     int32_t ret;
     int32_t complete_flag;
     int32_t ret2;
+    descriptor_t * p_rx_desc = papp_rx_desc[channel];
 
     /* Check argument */
 #if ((ETHER_CH0_EN == 0) && (ETHER_CH1_EN == 1)) || ((ETHER_CH0_EN == 1) && (ETHER_CH1_EN == 0))
@@ -485,6 +486,9 @@ int32_t R_ETHER_Read_ZC2 (uint32_t channel, void **pbuf)
         return ETHER_ERR_INVALID_CHAN;
     }
 #endif
+    if (NULL == p_rx_desc) {
+        return ETHER_ERR_INVALID_CHAN;
+    }
     if (NULL == pbuf) {
         return ETHER_ERR_INVALID_PTR;
     }
@@ -504,10 +508,10 @@ int32_t R_ETHER_Read_ZC2 (uint32_t channel, void **pbuf)
     complete_flag = ETHER_ERR_OTHER;
     while (ETHER_SUCCESS != complete_flag) {
         /* When receive data exists. */
-        if (RACT != (papp_rx_desc[channel]->status & RACT)) {
+        if (RACT != (p_rx_desc->status & RACT)) {
             /* Check multicast is detected when multicast frame filter is enabled */
             if (ETHER_MC_FILTER_ON == mc_filter_flag[channel]) {
-                if (RFS7_RMAF == (papp_rx_desc[channel]->status & RFS7_RMAF)) {
+                if (RFS7_RMAF == (p_rx_desc->status & RFS7_RMAF)) {
                     /* The buffer is released at the multicast frame detect.  */
                     ret2 = R_ETHER_Read_ZC2_BufRelease(channel);
                     if (ETHER_SUCCESS != ret2) {
@@ -520,7 +524,7 @@ int32_t R_ETHER_Read_ZC2 (uint32_t channel, void **pbuf)
             }
 
             if (ETHER_ERR_MC_FRAME != ret) {
-                if (RFE == (papp_rx_desc[channel]->status & RFE)) {
+                if (RFE == (p_rx_desc->status & RFE)) {
                     /* The buffer is released at the error.  */
                     ret2 = R_ETHER_Read_ZC2_BufRelease(channel);
                     if (ETHER_SUCCESS != ret2) {
@@ -531,10 +535,10 @@ int32_t R_ETHER_Read_ZC2 (uint32_t channel, void **pbuf)
                      * Pass the pointer to received data to application.  This is
                      * zero-copy operation.
                      */
-                    (*pbuf) = (void *) papp_rx_desc[channel]->buf_p;
+                    (*pbuf) = (void *) p_rx_desc->buf_p;
 
                     /* Get bytes received */
-                    num_recvd = papp_rx_desc[channel]->size;
+                    num_recvd = p_rx_desc->size;
                     ret = num_recvd;
                     complete_flag = ETHER_SUCCESS;
                 }
@@ -555,9 +559,9 @@ int32_t R_ETHER_Read_ZC2 (uint32_t channel, void **pbuf)
  *                    Specifies the ETHERC channel number.
  * Return Value : ETHER_SUCCESS -
  *                    Processing completed successfully
- *                ETHER_ERR_INVALID_CHAN - 
+ *                ETHER_ERR_INVALID_CHAN -
  *                    Nonexistent channel number
- *                ETHER_ERR_LINK - 
+ *                ETHER_ERR_LINK -
  *                    Auto-negotiation is not completed, and reception is not enabled.
  *                ETHER_ERR_MPDE -
  *                    As a Magic Packet is being detected, transmission and reception is not enabled.
@@ -566,6 +570,7 @@ int32_t R_ETHER_Read_ZC2_BufRelease (uint32_t channel)
 {
     volatile struct st_edmac * pedmac_adr;
     uint32_t status;
+    descriptor_t * p_rx_desc = papp_rx_desc[channel];
 
     /* Check argument */
 #if ((ETHER_CH0_EN == 0) && (ETHER_CH1_EN == 1)) || ((ETHER_CH0_EN == 1) && (ETHER_CH1_EN == 0))
@@ -575,6 +580,9 @@ int32_t R_ETHER_Read_ZC2_BufRelease (uint32_t channel)
         return ETHER_ERR_INVALID_CHAN;
     }
 #endif
+    if (NULL == p_rx_desc) {
+        return ETHER_ERR_INVALID_CHAN;
+    }
 
     /* When the Link up processing is not completed, return error */
     if (ETHER_FLAG_OFF == transfer_enable_flag[channel]) {
@@ -588,9 +596,9 @@ int32_t R_ETHER_Read_ZC2_BufRelease (uint32_t channel)
 
     /* When the Link up processing is completed */
     /* When receive data exists */
-    if (RACT != (papp_rx_desc[channel]->status & RACT)) {
+    if (RACT != (p_rx_desc->status & RACT)) {
         /* Move to next descriptor */
-        papp_rx_desc[channel]->status |= RACT;
+        p_rx_desc->status |= RACT;
 
         status = RFP1;
         status |= RFP0;
@@ -628,13 +636,13 @@ int32_t R_ETHER_Read_ZC2_BufRelease (uint32_t channel)
  *                    The Maximum size to write to the buffer
  * Return Value : ETHER_SUCCESS -
  *                    Processing completed successfully
- *                ETHER_ERR_INVALID_CHAN - 
+ *                ETHER_ERR_INVALID_CHAN -
  *                    Nonexistent channel number
  *                ETHER_ERR_INVALID_PTR -
  *                    Value of the pointer is NULL
- *                ETHER_ERR_LINK - 
+ *                ETHER_ERR_LINK -
  *                    Auto-negotiation is not completed, and reception is not enabled.
- *                ETHER_ERR_MPDE - 
+ *                ETHER_ERR_MPDE -
  *                    As a Magic Packet is being detected, transmission and reception is not enabled.
  *                ETHER_ERR_TACT -
  *                    Transmit buffer is not empty.
@@ -642,6 +650,8 @@ int32_t R_ETHER_Read_ZC2_BufRelease (uint32_t channel)
 ether_return_t R_ETHER_Write_ZC2_GetBuf (uint32_t channel, void **pbuf, uint16_t *pbuf_size)
 {
     /* Check argument */
+    descriptor_t* p_tx_desc = papp_tx_desc[channel];
+
 #if ((ETHER_CH0_EN == 0) && (ETHER_CH1_EN == 1)) || ((ETHER_CH0_EN == 1) && (ETHER_CH1_EN == 0))
     channel = 0;
 #else
@@ -649,6 +659,9 @@ ether_return_t R_ETHER_Write_ZC2_GetBuf (uint32_t channel, void **pbuf, uint16_t
         return ETHER_ERR_INVALID_CHAN;
     }
 #endif
+    if (NULL == p_tx_desc) {
+        return ETHER_ERR_INVALID_CHAN;
+    }
     if (NULL == pbuf) {
         return ETHER_ERR_INVALID_PTR;
     }
@@ -668,12 +681,12 @@ ether_return_t R_ETHER_Write_ZC2_GetBuf (uint32_t channel, void **pbuf, uint16_t
 
     /* When the Link up processing is completed */
     /* All transmit buffers are full */
-    if (TACT == (papp_tx_desc[channel]->status & TACT)) {
+    if (TACT == (p_tx_desc->status & TACT)) {
         return ETHER_ERR_TACT;
     }
 
     /* Give application another buffer to work with */
-    (*pbuf) = papp_tx_desc[channel]->buf_p;
+    (*pbuf) = p_tx_desc->buf_p;
     (*pbuf_size) = ETHER_CFG_BUFSIZE;
 
     return ETHER_SUCCESS;
@@ -681,8 +694,8 @@ ether_return_t R_ETHER_Write_ZC2_GetBuf (uint32_t channel, void **pbuf, uint16_t
 
 /***********************************************************************************************************************
  * Function Name: R_ETHER_Write_ZC2_SetBuf
- * Description  : Transmits an Ethernet frame. 
- *                The transmit descriptor points to the data to transmit. 
+ * Description  : Transmits an Ethernet frame.
+ *                The transmit descriptor points to the data to transmit.
  *                Data is sent directly from memory as a "zero copy" operation.
  * Arguments    : channel -
  *                    ETHERC channel number
@@ -690,7 +703,7 @@ ether_return_t R_ETHER_Write_ZC2_GetBuf (uint32_t channel, void **pbuf, uint16_t
  *                    The size (60 to 1,514 bytes) which is the Ethernet frame length minus 4 bytes of CRC
  * Return Value : ETHER_SUCCESS -
  *                    Processing completed successfully
- *                ETHER_ERR_INVALID_CHAN - 
+ *                ETHER_ERR_INVALID_CHAN -
  *                    Nonexistent channel number
  *                ETHER_ERR_INVALID_DATA -
  *                    Value of the argument is out of range
@@ -702,6 +715,7 @@ ether_return_t R_ETHER_Write_ZC2_GetBuf (uint32_t channel, void **pbuf, uint16_t
 ether_return_t R_ETHER_Write_ZC2_SetBuf (uint32_t channel, const uint32_t len)
 {
     volatile struct st_edmac * pedmac_adr;
+    descriptor_t* p_tx_desc = papp_tx_desc[channel];
 
     /* Check argument */
 #if ((ETHER_CH0_EN == 0) && (ETHER_CH1_EN == 1)) || ((ETHER_CH0_EN == 1) && (ETHER_CH1_EN == 0))
@@ -711,6 +725,9 @@ ether_return_t R_ETHER_Write_ZC2_SetBuf (uint32_t channel, const uint32_t len)
         return ETHER_ERR_INVALID_CHAN;
     }
 #endif
+    if (NULL == p_tx_desc) {
+        return ETHER_ERR_INVALID_CHAN;
+    }
     if ((ETHER_BUFSIZE_MIN > len) || (ETHER_BUFSIZE_MAX < len)) {
         return ETHER_ERR_INVALID_DATA;
     }
@@ -727,10 +744,10 @@ ether_return_t R_ETHER_Write_ZC2_SetBuf (uint32_t channel, const uint32_t len)
 
     /* When the Link up processing is completed */
     /* The data of the buffer is made active.  */
-    papp_tx_desc[channel]->bufsize = len;
-    papp_tx_desc[channel]->status &= (~(TFP1 | TFP0));
-    papp_tx_desc[channel]->status |= ((TFP1 | TFP0) | TACT);
-    papp_tx_desc[channel] = papp_tx_desc[channel]->next;
+    p_tx_desc->bufsize = len;
+    p_tx_desc->status &= (~(TFP1 | TFP0));
+    p_tx_desc->status |= ((TFP1 | TFP0) | TACT);
+    papp_tx_desc[channel] = p_tx_desc->next;
 
     pedmac_adr = g_eth_control_ch[channel].pedmac;
 
@@ -751,7 +768,7 @@ ether_return_t R_ETHER_Write_ZC2_SetBuf (uint32_t channel, const uint32_t len)
  *                    Link is up
  *                ETHER_ERR_OTHER -
  *                    Link is down
- *                ETHER_ERR_INVALID_CHAN - 
+ *                ETHER_ERR_INVALID_CHAN -
  *                    Nonexistent channel number
  ***********************************************************************************************************************/
 ether_return_t R_ETHER_CheckLink_ZC (uint32_t channel)
@@ -777,7 +794,7 @@ ether_return_t R_ETHER_CheckLink_ZC (uint32_t channel)
 /***********************************************************************************************************************
  * Function Name: R_ETHER_LinkProcess
  * Description  : The Link up processing, the Link down processing, and the magic packet detection processing are
- *                 executed. 
+ *                 executed.
  * Arguments    : channel -
  *                    ETHERC channel number
  * Return Value : none
@@ -793,7 +810,7 @@ void R_ETHER_LinkProcess (uint32_t channel)
     channel = 0;
 #else
     if (ETHER_CHANNEL_MAX <= channel) {
-        return ETHER_ERR_INVALID_CHAN;
+        return;
     }
 #endif
 
@@ -808,9 +825,9 @@ void R_ETHER_LinkProcess (uint32_t channel)
         }
 
         /*
-         * After the close function is called, the open function is called 
+         * After the close function is called, the open function is called
          * to have to set ETHERC to a usual operational mode
-         * to usually communicate after magic packet is detected. 
+         * to usually communicate after magic packet is detected.
          */
         R_ETHER_Close_ZC2(channel);
         R_ETHER_Open_ZC2(channel, mac_addr_buf[channel], pause_frame_enable[channel]);
@@ -834,9 +851,9 @@ void R_ETHER_LinkProcess (uint32_t channel)
     /* When the link is up */
     if (ETHER_FLAG_ON_LINK_ON == lchng_flag[channel]) {
 #if (ETHER_CFG_USE_LINKSTA == 1)
-        /* 
-         * The Link Up/Down is confirmed by the Link Status bit of PHY register1, 
-         * because the LINK signal of PHY-LSI is used for LED indicator, and 
+        /*
+         * The Link Up/Down is confirmed by the Link Status bit of PHY register1,
+         * because the LINK signal of PHY-LSI is used for LED indicator, and
          * isn't used for notifing the Link Up/Down to external device.
          */
         ret = R_ETHER_CheckLink_ZC(channel);
@@ -859,7 +876,7 @@ void R_ETHER_LinkProcess (uint32_t channel)
 
             /*
              * ETHERC and EDMAC are set after ETHERC and EDMAC are reset in software
-             * and sending and receiving is permitted. 
+             * and sending and receiving is permitted.
              */
             ether_configure_mac(channel, mac_addr_buf[channel], NO_USE_MAGIC_PACKET_DETECT);
             ret = ether_do_link(channel, NO_USE_MAGIC_PACKET_DETECT);
@@ -896,7 +913,7 @@ void R_ETHER_LinkProcess (uint32_t channel)
 
        /*
         * ETHERC and EDMAC are set after ETHERC and EDMAC are reset in software
-        * and sending and receiving is permitted. 
+        * and sending and receiving is permitted.
         */
         ether_configure_mac(channel, mac_addr_buf[channel], NO_USE_MAGIC_PACKET_DETECT);
         ret = ether_do_link(channel, NO_USE_MAGIC_PACKET_DETECT);
@@ -919,9 +936,9 @@ void R_ETHER_LinkProcess (uint32_t channel)
         lchng_flag[channel] = ETHER_FLAG_OFF;
 
 #if (ETHER_CFG_USE_LINKSTA == 1)
-        /* 
-         * The Link Up/Down is confirmed by the Link Status bit of PHY register1, 
-         * because the LINK signal of PHY-LSI is used for LED indicator, and 
+        /*
+         * The Link Up/Down is confirmed by the Link Status bit of PHY register1,
+         * because the LINK signal of PHY-LSI is used for LED indicator, and
          * isn't used for notifying the Link Up/Down to external device.
          */
         ret = R_ETHER_CheckLink_ZC(channel);
@@ -963,14 +980,14 @@ void R_ETHER_LinkProcess (uint32_t channel)
 /***********************************************************************************************************************
  * Function Name: R_ETHER_WakeOnLAN
  * Description  : The setting of ETHERC is changed from a usual sending and
- *                receiving mode to the magic packet detection mode. 
+ *                receiving mode to the magic packet detection mode.
  * Arguments    : channel -
  *                    ETHERC channel number
  * Return Value : ETHER_SUCCESS -
  *                    Processing completed successfully
- *                ETHER_ERR_INVALID_CHAN - 
+ *                ETHER_ERR_INVALID_CHAN -
  *                    Nonexistent channel number
- *                ETHER_ERR_LINK - 
+ *                ETHER_ERR_LINK -
  *                    Auto-negotiation is not completed, and reception is not enabled.
  *                ETHER_ERR_OTHER -
  *                    A switch to magic packet detection was performed when the link state was link is down.
@@ -1027,16 +1044,16 @@ ether_return_t R_ETHER_WakeOnLAN (uint32_t channel)
  *                using non-zero-copy communication.
  * Arguments    : channel -
  *                    ETHERC channel number
- *                pbuf - 
+ *                pbuf -
  *                    The receive buffer (to store the receive data)
  * Return Value : Returns the number of bytes received.
  *                ETHER_NO_DATA -
  *                    A zero value indicates no data is received.
- *                ETHER_ERR_INVALID_CHAN - 
+ *                ETHER_ERR_INVALID_CHAN -
  *                    Nonexistent channel number
  *                ETHER_ERR_INVALID_PTR -
  *                    Value of the pointer is NULL
- *                ETHER_ERR_LINK - 
+ *                ETHER_ERR_LINK -
  *                    Auto-negotiation is not completed, and reception is not enabled.
  *                ETHER_ERR_MPDE -
  *                    As a Magic Packet is being detected, transmission and reception is not enabled.
@@ -1093,7 +1110,7 @@ int32_t R_ETHER_Read (uint32_t channel, void *pbuf)
 
 /***********************************************************************************************************************
  * Function Name: R_ETHER_Write
- * Description  : Transmit Ethernet frame. Transmits data from the location specified by the pointer to the transmit 
+ * Description  : Transmit Ethernet frame. Transmits data from the location specified by the pointer to the transmit
  *                buffer, with the data size equal to the specified frame length, using non-zero-copy communication.
  * Arguments    : channel -
  *                    ETHERC channel number
@@ -1103,13 +1120,13 @@ int32_t R_ETHER_Read (uint32_t channel, void *pbuf)
  *                    The size (60 to 1,514 bytes) which is the Ethernet frame length minus 4 bytes of CRC
  * Return Value : ETHER_SUCCESS -
  *                    Processing completed successfully
- *                ETHER_ERR_INVALID_CHAN - 
+ *                ETHER_ERR_INVALID_CHAN -
  *                    Nonexistent channel number
  *                ETHER_ERR_INVALID_DATA -
  *                    Value of the argument is out of range
  *                ETHER_ERR_INVALID_PTR -
  *                    Value of the pointer is NULL
- *                ETHER_ERR_LINK - 
+ *                ETHER_ERR_LINK -
  *                    Auto-negotiation is not completed, and reception is not enabled.
  *                ETHER_ERR_MPDE -
  *                    As a Magic Packet is being detected, transmission and reception is not enabled.
@@ -1152,7 +1169,7 @@ ether_return_t R_ETHER_Write (uint32_t channel, void *pbuf, const uint32_t len)
             /* (3) Enable the EDMAC to transmit data in the transmit buffer. */
             ret = R_ETHER_Write_ZC2_SetBuf(channel, len);
 
-            /* 
+            /*
              * Confirm that the transmission is completed.
              * Data written in the transmit buffer is transmitted by the EDMAC. Make sure that the
              * transmission is completed after writing data to the transmit buffer.
@@ -1168,12 +1185,12 @@ ether_return_t R_ETHER_Write (uint32_t channel, void *pbuf, const uint32_t len)
 
 /***********************************************************************************************************************
  * Function Name: R_ETHER_CheckWrite
- * Description  : Checking that the data has been sent. 
+ * Description  : Checking that the data has been sent.
  * Arguments    : channel -
  *                    ETHERC channel number
  * Return Value : ETHER_SUCCESS -
  *                    Processing completed successfully
- *                ETHER_ERR_INVALID_CHAN - 
+ *                ETHER_ERR_INVALID_CHAN -
  *                    Nonexistent channel number
  ***********************************************************************************************************************/
 ether_return_t R_ETHER_CheckWrite (uint32_t channel)
@@ -1199,13 +1216,13 @@ ether_return_t R_ETHER_CheckWrite (uint32_t channel)
 /***********************************************************************************************************************
  * Function Name: R_ETHER_Control
  * Description  : By command argument is a function to change the settings of Ether driver.
- * Arguments    : cmd - 
+ * Arguments    : cmd -
  *                    Control code
  *                control -
  *                    Parameters according to the control code
  * Return Value : ETHER_SUCCESS -
  *                    Processing completed successfully
- *                ETHER_ERR_INVALID_CHAN - 
+ *                ETHER_ERR_INVALID_CHAN -
  *                    Nonexistent channel number
  *                ETHER_ERR_CHAN_OPEN -
  *                    Indicates the Ethernet cannot be opened because it is being used by another application
@@ -1303,9 +1320,9 @@ static void ether_reset_mac (uint32_t channel)
 
     /*
      * Waiting time until the initialization of ETHERC and EDMAC is completed is 64 cycles
-     * in the clock conversion of an internal bus of EDMAC. 
+     * in the clock conversion of an internal bus of EDMAC.
      */
-    for (i = 0; i < 0x00000180; i++) {
+    for (i = 0; i < 0x00001180; i++) {
         ;
     }
 
@@ -1366,8 +1383,8 @@ static void ether_init_descriptors (uint32_t channel)
  *                Direct Memory Access controller (EDMAC).
  * Arguments    : channel -
  *                    ETHERC channel number
- *                mode - 
- *                   The operational mode is specified. 
+ *                mode -
+ *                   The operational mode is specified.
  *                   NO_USE_MAGIC_PACKET_DETECT (0) - Communicate mode usually
  *                   USE_MAGIC_PACKET_DETECT    (1) - Magic packet detection mode
  * Return Value : none
@@ -1491,13 +1508,13 @@ static void ether_pause_resolution (uint16_t local_ability, uint16_t partner_abi
 
 /***********************************************************************************************************************
  * Function Name: ether_configure_mac
- * Description  : Software reset is executed, and ETHERC and EDMAC are configured. 
+ * Description  : Software reset is executed, and ETHERC and EDMAC are configured.
  * Arguments    : channel -
  *                    ETHERC channel number
  *                mac_addr -
  *                    The MAC address of ETHERC
  *                mode -
- *                    The operational mode is specified. 
+ *                    The operational mode is specified.
  *                    NO_USE_MAGIC_PACKET_DETECT (0) - Communicate mode usually
  *                    USE_MAGIC_PACKET_DETECT    (1) - Magic packet detection mode
  * Return Value : none
@@ -1542,8 +1559,8 @@ static void ether_configure_mac (uint32_t channel, const uint8_t mac_addr[], con
  *                control (PAUSE frames).
  * Arguments    : channel -
  *                    ETHERC channel number
- *                mode - 
- *                    The operational mode is specified. 
+ *                mode -
+ *                    The operational mode is specified.
  *                    NO_USE_MAGIC_PACKET_DETECT (0) - Communicate mode usually
  *                    USE_MAGIC_PACKET_DETECT    (1) - Magic packet detection mode
  * Return Value : ETHER_SUCCESS -
@@ -1676,12 +1693,12 @@ static ether_return_t ether_do_link (uint32_t channel, const uint8_t mode)
                 /* The magic packet detection is permitted. */
                 petherc_adr->ECMR.BIT.MPDE = 1;
 
-                /* Because data is not transmitted for the magic packet detection waiting, 
+                /* Because data is not transmitted for the magic packet detection waiting,
                  only the reception is permitted. */
                 petherc_adr->ECMR.BIT.RE = 1;
 
                 /*
-                 * The reception function of EDMAC keep invalidity 
+                 * The reception function of EDMAC keep invalidity
                  * because the receive data don't need to be read when the magic packet detection mode.
                  */
             }
@@ -1697,7 +1714,7 @@ static ether_return_t ether_do_link (uint32_t channel, const uint8_t mode)
  * Function Name: ether_set_callback
  * Description  : Set the callback function
  * Arguments    : control -
- *                    Callback function pointer. 
+ *                    Callback function pointer.
  *                    If you would rather poll for finish then please input NULL for this argument.
  * Return Value : ETHER_SUCCESS
  *                    Processing completed successfully
@@ -1723,7 +1740,7 @@ static ether_return_t ether_set_callback (ether_param_t const control)
  *                    Promiscuous mode bit
  * Return Value : ETHER_SUCCESS -
  *                    Processing completed successfully
- *                ETHER_ERR_INVALID_CHAN - 
+ *                ETHER_ERR_INVALID_CHAN -
  *                    Nonexistent channel number
  ***********************************************************************************************************************/
 static ether_return_t ether_set_promiscuous_mode (ether_param_t const control)
@@ -2041,7 +2058,7 @@ static ether_return_t ether_set_broadcastframe_filter (ether_param_t const contr
 
 /***********************************************************************************************************************
  * Function Name: power_on_control
- * Description  : Powers on the channel if the ETHEC channel used and the PHY access channel are different, or if the 
+ * Description  : Powers on the channel if the ETHEC channel used and the PHY access channel are different, or if the
  *                PHY access channel is powered off.
  * Arguments    : channel -
  *                    ETHERC channel number
@@ -2052,7 +2069,7 @@ static ether_return_t ether_set_broadcastframe_filter (ether_param_t const contr
  *                ETHER_ERR_CHAN_OPEN -
  *                    Indicates the Ethernet cannot be opened because it is being used by another application
  *              : ETHER_ERR_OTHER -
- *                    
+ *
  ***********************************************************************************************************************/
 static ether_return_t power_on_control (uint32_t channel)
 {
@@ -2066,7 +2083,7 @@ static ether_return_t power_on_control (uint32_t channel)
 
 /***********************************************************************************************************************
  * Function Name: power_off_control
- * Description  : Powers off the channel if the ETHEC channel used and the PHY access channel are different, or if the 
+ * Description  : Powers off the channel if the ETHEC channel used and the PHY access channel are different, or if the
  *                PHY access channel is powered off.
  * Arguments    : channel -
  *                    ETHERC channel number
@@ -2080,7 +2097,7 @@ static void power_off_control (uint32_t channel)
 
 /***********************************************************************************************************************
  * Function Name: check_mpde_bit
- * Description  : 
+ * Description  :
  * Arguments    : none
  * Return Value : 1: Magic Packet detection is enabled.
  *                0: Magic Packet detection is disabled.
@@ -2204,16 +2221,16 @@ static void ether_int_common (uint32_t channel)
         }
 
         /*
-         * Because each bit of the ECSR register is cleared when one is written, 
-         * the value read from the register is written and the bit is cleared. 
+         * Because each bit of the ECSR register is cleared when one is written,
+         * the value read from the register is written and the bit is cleared.
          */
         /* Clear all ETHERC status BFR, PSRTO, LCHNG, MPD, ICD */
         petherc_adr->ECSR.LONG = status_ecsr;
     }
 
     /*
-     * Because each bit of the EESR register is cleared when one is written, 
-     * the value read from the register is written and the bit is cleared. 
+     * Because each bit of the EESR register is cleared when one is written,
+     * the value read from the register is written and the bit is cleared.
      */
     pedmac_adr->EESR.LONG = status_eesr; /* Clear EDMAC status bits */
 

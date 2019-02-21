@@ -1,20 +1,20 @@
 /***********************************************************************************************************************
  * DISCLAIMER
- * This software is supplied by Renesas Electronics Corporation and is only intended for use with Renesas products. No 
- * other uses are authorized. This software is owned by Renesas Electronics Corporation and is protected under all 
- * applicable laws, including copyright laws. 
+ * This software is supplied by Renesas Electronics Corporation and is only intended for use with Renesas products. No
+ * other uses are authorized. This software is owned by Renesas Electronics Corporation and is protected under all
+ * applicable laws, including copyright laws.
  * THIS SOFTWARE IS PROVIDED "AS IS" AND RENESAS MAKES NO WARRANTIES REGARDING
- * THIS SOFTWARE, WHETHER EXPRESS, IMPLIED OR STATUTORY, INCLUDING BUT NOT LIMITED TO WARRANTIES OF MERCHANTABILITY, 
- * FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT. ALL SUCH WARRANTIES ARE EXPRESSLY DISCLAIMED. TO THE MAXIMUM 
- * EXTENT PERMITTED NOT PROHIBITED BY LAW, NEITHER RENESAS ELECTRONICS CORPORATION NOR ANY OF ITS AFFILIATED COMPANIES 
- * SHALL BE LIABLE FOR ANY DIRECT, INDIRECT, SPECIAL, INCIDENTAL OR CONSEQUENTIAL DAMAGES FOR ANY REASON RELATED TO THIS 
+ * THIS SOFTWARE, WHETHER EXPRESS, IMPLIED OR STATUTORY, INCLUDING BUT NOT LIMITED TO WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT. ALL SUCH WARRANTIES ARE EXPRESSLY DISCLAIMED. TO THE MAXIMUM
+ * EXTENT PERMITTED NOT PROHIBITED BY LAW, NEITHER RENESAS ELECTRONICS CORPORATION NOR ANY OF ITS AFFILIATED COMPANIES
+ * SHALL BE LIABLE FOR ANY DIRECT, INDIRECT, SPECIAL, INCIDENTAL OR CONSEQUENTIAL DAMAGES FOR ANY REASON RELATED TO THIS
  * SOFTWARE, EVEN IF RENESAS OR ITS AFFILIATES HAVE BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGES.
- * Renesas reserves the right, without notice, to make changes to this software and to discontinue the availability of 
- * this software. By using this software, you agree to the additional terms and conditions found by accessing the 
+ * Renesas reserves the right, without notice, to make changes to this software and to discontinue the availability of
+ * this software. By using this software, you agree to the additional terms and conditions found by accessing the
  * following link:
- * http://www.renesas.com/disclaimer 
+ * http://www.renesas.com/disclaimer
  *
- * Copyright (C) 2018 Renesas Electronics Corporation. All rights reserved.    
+ * Copyright (C) 2018 Renesas Electronics Corporation. All rights reserved.
  ***********************************************************************************************************************/
 /***********************************************************************************************************************
  * File Name    : phy.c
@@ -82,7 +82,7 @@
 #define PHY_STATUS_EX_CAPABILITY        (1 << 0)
 
 /* Auto Negotiation Advertisement Bit Definitions */
-#define PHY_AN_ADVERTISEMENT_NEXT_PAGE  (1 << 15)  
+#define PHY_AN_ADVERTISEMENT_NEXT_PAGE  (1 << 15)
 #define PHY_AN_ADVERTISEMENT_RM_FAULT   (1 << 13)
 #define PHY_AN_ADVERTISEMENT_ASM_DIR    (1 << 11)
 #define PHY_AN_ADVERTISEMENT_PAUSE      (1 << 10)
@@ -98,8 +98,8 @@
 #define PHY_AN_LINK_PARTNER_ACK         (1 << 14)
 #define PHY_AN_LINK_PARTNER_RM_FAULT    (1 << 13)
 #define PHY_AN_LINK_PARTNER_ASM_DIR     (1 << 11)
-#define PHY_AN_LINK_PARTNER_PAUSE       (1 << 10) 
-#define PHY_AN_LINK_PARTNER_100_T4      (1 << 9) 
+#define PHY_AN_LINK_PARTNER_PAUSE       (1 << 10)
+#define PHY_AN_LINK_PARTNER_100_T4      (1 << 9)
 #define PHY_AN_LINK_PARTNER_100F        (1 << 8)
 #define PHY_AN_LINK_PARTNER_100H        (1 << 7)
 #define PHY_AN_LINK_PARTNER_10F         (1 << 6)
@@ -141,9 +141,9 @@ static uint16_t local_advertise[ETHER_CHANNEL_MAX]; /* the capabilities of the l
  * Arguments    : ether_channel -
  *                    Ethernet channel number
  * Return Value : R_PHY_OK -
- *                    
+ *
  *                R_PHY_ERROR -
- *                    
+ *
  ***********************************************************************************************************************/
 int16_t phy_init (uint32_t ether_channel)
 {
@@ -162,10 +162,10 @@ int16_t phy_init (uint32_t ether_channel)
     } while ((reg & PHY_CONTROL_RESET) && (count < ETHER_CFG_PHY_DELAY_RESET));
 
     if (count < ETHER_CFG_PHY_DELAY_RESET) {
-        /* 
-         * When KSZ8041NL of the Micrel, Inc. is used, 
-         * the pin that outputs the state of LINK is used combinedly with ACTIVITY in default. 
-         * The setting of the pin is changed so that only the state of LINK is output. 
+        /*
+         * When KSZ8041NL of the Micrel, Inc. is used,
+         * the pin that outputs the state of LINK is used combinedly with ACTIVITY in default.
+         * The setting of the pin is changed so that only the state of LINK is output.
          */
 #if ETHER_CFG_USE_PHY_KSZ8041NL != 0
         reg = phy_read(ether_channel, PHY_REG_PHY_CONTROL_1);
@@ -230,18 +230,18 @@ void phy_start_autonegotiate (uint32_t ether_channel, uint8_t pause)
  * Description  : reports the other side's physical capability
  * Arguments    : ether_channel -
  *                    Ethernet channel number
- *              : *pline_speed_duplex - 
+ *              : *pline_speed_duplex -
  *                    a pointer to the location of both the line speed and the duplex
- *                *plocal_pause - 
+ *                *plocal_pause -
  *                    a pointer to the location to store the local pause bits.
- *                *ppartner_pause - 
+ *                *ppartner_pause -
  *                    a pointer to the location to store the partner pause bits.
  * Return Value : R_PHY_OK -
- *                    
+ *
  *                R_PHY_ERROR -
- *                    
- * Note         : The value returned to local_pause and patner_pause is used 
- *                as it is as an argument of ether_pause_resolution function. 
+ *
+ * Note         : The value returned to local_pause and patner_pause is used
+ *                as it is as an argument of ether_pause_resolution function.
  ***********************************************************************************************************************/
 int16_t phy_set_autonegotiate (uint32_t ether_channel, uint16_t *pline_speed_duplex, uint16_t *plocal_pause,
         uint16_t *ppartner_pause)
@@ -270,7 +270,7 @@ int16_t phy_set_autonegotiate (uint32_t ether_channel, uint16_t *pline_speed_dup
     if (PHY_STATUS_AN_COMPLETE != (reg & PHY_STATUS_AN_COMPLETE)) {
         return R_PHY_ERROR;
     }
-    
+
     /* Get the link partner response */
     reg = phy_read(ether_channel, PHY_REG_AN_LINK_PARTNER);
 
@@ -310,11 +310,11 @@ int16_t phy_set_autonegotiate (uint32_t ether_channel, uint16_t *pline_speed_dup
 } /* End of function phy_set_autonegotiate() */
 
 /***********************************************************************************************************************
- * Function Name: phy_get_link_status 
- * Description  : Returns the status of the physical link 
+ * Function Name: phy_get_link_status
+ * Description  : Returns the status of the physical link
  * Arguments    : ether_channel -
  *                    Ethernet channel number
- * Return Value : -1 if links is down, 0 otherwise 
+ * Return Value : -1 if links is down, 0 otherwise
  ***********************************************************************************************************************/
 int16_t phy_get_link_status (uint32_t ether_channel)
 {
@@ -323,6 +323,7 @@ int16_t phy_get_link_status (uint32_t ether_channel)
     /* Because reading the first time shows the previous state, the Link status bit is read twice. */
     reg = phy_read(ether_channel, PHY_REG_STATUS);
     reg = phy_read(ether_channel, PHY_REG_STATUS);
+
 
     /* When the link isn't up, return error */
     if (PHY_STATUS_LINK_UP != (reg & PHY_STATUS_LINK_UP)) {
@@ -352,8 +353,8 @@ static uint16_t phy_read (uint32_t ether_channel, uint16_t reg_addr)
     uint16_t data;
 
     /*
-     * The value is read from the PHY register by the frame format of MII Management Interface provided 
-     * for by Table 22-12 of 22.2.4.5 of IEEE 802.3-2008_section2. 
+     * The value is read from the PHY register by the frame format of MII Management Interface provided
+     * for by Table 22-12 of 22.2.4.5 of IEEE 802.3-2008_section2.
      */
     phy_preamble(ether_channel);
     phy_reg_set(ether_channel, reg_addr, PHY_MII_READ);
@@ -379,7 +380,7 @@ static void phy_write (uint32_t ether_channel, uint16_t reg_addr, uint16_t data)
 {
     /*
      * The value is read from the PHY register by the frame format of MII Management Interface provided
-     * for by Table 22-12 of 22.2.4.5 of IEEE 802.3-2008_section2. 
+     * for by Table 22-12 of 22.2.4.5 of IEEE 802.3-2008_section2.
      */
     phy_preamble(ether_channel);
     phy_reg_set(ether_channel, reg_addr, PHY_MII_WRITE);
@@ -391,7 +392,7 @@ static void phy_write (uint32_t ether_channel, uint16_t reg_addr, uint16_t data)
 /***********************************************************************************************************************
  * Function Name: phy_preamble
  * Description  : As preliminary preparation for access to the PHY module register,
- *                "1" is output via the MII management interface.                  
+ *                "1" is output via the MII management interface.
  * Arguments    : ether_channel -
  *                    Ethernet channel number
  * Return Value : none
@@ -401,7 +402,7 @@ static void phy_preamble (uint32_t ether_channel)
     int16_t i;
 
     /*
-     * The processing of PRE (preamble) about the frame format of MII Management Interface which is 
+     * The processing of PRE (preamble) about the frame format of MII Management Interface which is
      * provided by "Table 22-12" of "22.2.4.5" of "IEEE 802.3-2008_section2".
      */
     i = 32;
@@ -428,8 +429,8 @@ static void phy_reg_set (uint32_t ether_channel, uint16_t reg_addr, int32_t opti
     uint16_t data;
 
     /*
-     * The processing of ST (start of frame),OP (operation code), PHYAD (PHY Address), and 
-     * REGAD (Register Address)  about the frame format of MII Management Interface which is 
+     * The processing of ST (start of frame),OP (operation code), PHYAD (PHY Address), and
+     * REGAD (Register Address)  about the frame format of MII Management Interface which is
      * provided by "Table 22-12" of "22.2.4.5" of "IEEE 802.3-2008_section2".
      */
     data = 0;
@@ -480,7 +481,7 @@ static void phy_reg_read (uint32_t ether_channel, uint16_t *pdata)
     }
 
     /*
-     * The processing of DATA (data) about reading of the frame format of MII Management Interface which is 
+     * The processing of DATA (data) about reading of the frame format of MII Management Interface which is
      * provided by "Table 22-12" of "22.2.4.5" of "IEEE 802.3-2008_section2".
      */
     reg_data = 0;
@@ -524,7 +525,7 @@ static void phy_reg_write (uint32_t ether_channel, uint16_t data)
     int32_t i;
 
     /*
-     * The processing of DATA (data) about writing of the frame format of MII Management Interface which is 
+     * The processing of DATA (data) about writing of the frame format of MII Management Interface which is
      * provided by "Table 22-12" of "22.2.4.5" of "IEEE 802.3-2008_section2".
      */
     i = 16;
@@ -542,7 +543,7 @@ static void phy_reg_write (uint32_t ether_channel, uint16_t data)
 /***********************************************************************************************************************
  * Function Name: phy_trans_zto0
  * Description  : Performs bus release so that PHY can drive data
- *              : for read operation 
+ *              : for read operation
  * Arguments    : ether_channel -
  *                    Ethernet channel number
  * Return Value : none
@@ -559,7 +560,7 @@ static void phy_trans_zto0 (uint32_t ether_channel)
     }
 
     /*
-     * The processing of TA (turnaround) about reading of the frame format of MII Management Interface which is 
+     * The processing of TA (turnaround) about reading of the frame format of MII Management Interface which is
      * provided by "Table 22-12" of "22.2.4.5" of "IEEE 802.3-2008_section2".
      */
     for (j = ETHER_CFG_PHY_MII_WAIT; j > 0; j--) {
@@ -583,7 +584,7 @@ static void phy_trans_zto0 (uint32_t ether_channel)
 /***********************************************************************************************************************
  * Function Name: phy_trans_1to0
  * Description  : Switches data bus so MII interface can drive data
- *              : for write operation 
+ *              : for write operation
  * Arguments    : ether_channel -
  *                    Ethernet channel number
  * Return Value : none
@@ -600,7 +601,7 @@ static void phy_trans_1to0 (uint32_t ether_channel)
 
 /***********************************************************************************************************************
  * Function Name: phy_mii_write1
- * Description  : Outputs 1 to the MII interface 
+ * Description  : Outputs 1 to the MII interface
  * Arguments    : ether_channel -
  *                    Ethernet channel number
  * Return Value : none
@@ -617,9 +618,9 @@ static void phy_mii_write1 (uint32_t ether_channel)
     }
 
     /*
-     * The processing of one bit about frame format of MII Management Interface which is 
-     * provided by "Table 22-12" of "22.2.4.5" of "IEEE 802.3-2008_section2". 
-     * The data that 1 is output. 
+     * The processing of one bit about frame format of MII Management Interface which is
+     * provided by "Table 22-12" of "22.2.4.5" of "IEEE 802.3-2008_section2".
+     * The data that 1 is output.
      */
     for (j = ETHER_CFG_PHY_MII_WAIT; j > 0; j--) {
         (*petherc_pir) = 0x00000006;
@@ -641,7 +642,7 @@ static void phy_mii_write1 (uint32_t ether_channel)
 
 /***********************************************************************************************************************
  * Function Name: phy_mii_write0
- * Description  : Outputs 0 to the MII interface 
+ * Description  : Outputs 0 to the MII interface
  * Arguments    : ether_channel -
  *                    Ethernet channel number
  * Return Value : none
@@ -658,9 +659,9 @@ static void phy_mii_write0 (uint32_t ether_channel)
     }
 
     /*
-     * The processing of one bit about frame format of MII Management Interface which is 
-     * provided by "Table 22-12" of "22.2.4.5" of "IEEE 802.3-2008_section2". 
-     * The data that 0 is output. 
+     * The processing of one bit about frame format of MII Management Interface which is
+     * provided by "Table 22-12" of "22.2.4.5" of "IEEE 802.3-2008_section2".
+     * The data that 0 is output.
      */
     for (j = ETHER_CFG_PHY_MII_WAIT; j > 0; j--) {
         (*petherc_pir) = 0x00000002;
@@ -703,4 +704,3 @@ static int16_t phy_get_pir_address (uint32_t ether_channel, volatile uint32_t **
 
     return R_PHY_OK;
 } /* End of function phy_get_pir_address() */
-

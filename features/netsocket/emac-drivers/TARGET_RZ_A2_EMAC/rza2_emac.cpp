@@ -3,23 +3,35 @@
 #include "mbed_shared_queues.h"
 #include "r_ether_rza2_if.h"
 #include "rza2_emac.h"
+#include "r_ether_rza2_config.h"
 
 #define RZ_A2_ETH_IF_NAME    "en"
 
 // Weak so a module can override
 MBED_WEAK EMAC &EMAC::get_default_instance()
 {
-    return RZ_A2_EMAC::get_instance();
+    return RZ_A2_EMAC::get_instance(ETHER_CHANNEL_0);
 }
 
-RZ_A2_EMAC &RZ_A2_EMAC::get_instance()
+RZ_A2_EMAC &RZ_A2_EMAC::get_instance(uint32_t channel)
 {
-    static RZ_A2_EMAC emac;
+#if (ETHER_CH0_EN == 1) && (ETHER_CH1_EN == 1)
+    static RZ_A2_EMAC emac_0(ETHER_CHANNEL_0);
+    static RZ_A2_EMAC emac_1(ETHER_CHANNEL_1);
+
+    if (channel == 0) {
+        return emac_0;
+    } else {
+        return emac_1;
+    }
+#else
+    static RZ_A2_EMAC emac(channel);
     return emac;
+#endif
 }
 
-RZ_A2_EMAC::RZ_A2_EMAC() : hwaddr(), hwaddr_set(false), power_on(false),
-    channel(ETHER_CHANNEL_0), recvThread(osPriorityNormal, 896)
+RZ_A2_EMAC::RZ_A2_EMAC(uint32_t channel) : _channel(channel), hwaddr(), hwaddr_set(false), power_on(false),
+    recvThread(osPriorityNormal, 896), sem_recv(0)
 {
 }
 
@@ -55,7 +67,7 @@ void RZ_A2_EMAC::set_hwaddr(const uint8_t *addr)
 
     /* Reconnect */
     if (power_on != false) {
-        R_ETHER_Open_ZC2(channel, hwaddr, ETHER_FLAG_OFF);
+        R_ETHER_Open_ZC2(_channel, hwaddr, ETHER_FLAG_OFF);
     }
 }
 
@@ -68,7 +80,7 @@ bool RZ_A2_EMAC::link_out(emac_mem_buf_t *buf)
     uint8_t *      pwrite_buffer_address;
 
     while (1) {
-        if (R_ETHER_Write_ZC2_GetBuf(channel, (void **) &pwrite_buffer_address, &write_buf_size) == ETHER_SUCCESS) {
+        if (R_ETHER_Write_ZC2_GetBuf(_channel, (void **) &pwrite_buffer_address, &write_buf_size) == ETHER_SUCCESS) {
             break;
         }
         retry_cnt++;
@@ -91,7 +103,7 @@ bool RZ_A2_EMAC::link_out(emac_mem_buf_t *buf)
             memset(&pwrite_buffer_address[total_write_size], 0, 60 - total_write_size);
             total_write_size = 60;
         }
-        if (R_ETHER_Write_ZC2_SetBuf(channel, total_write_size) == ETHER_SUCCESS) {
+        if (R_ETHER_Write_ZC2_SetBuf(_channel, total_write_size) == ETHER_SUCCESS) {
             return true;
         }
     }
@@ -111,14 +123,18 @@ bool RZ_A2_EMAC::power_up()
     R_ETHER_Initial();
 
     /* Set the callback function */
-    param.ether_callback.pcb_func    = &_callback;
+    param.ether_callback.pcb_func    = &_callback_pcb;
     R_ETHER_Control(CONTROL_SET_CALLBACK, param);
 
-    param.channel = channel;
+    /* Set the callback function */
+    param.ether_callback.pcb_int_hnd    = &_callback_hnd;
+    R_ETHER_Control(CONTROL_SET_INT_HANDLER, param);
+
+    param.channel = _channel;
     R_ETHER_Control(CONTROL_POWER_ON, param);
 
     if (hwaddr_set != false) {
-        R_ETHER_Open_ZC2(channel, hwaddr, ETHER_FLAG_OFF);
+        R_ETHER_Open_ZC2(_channel, hwaddr, ETHER_FLAG_OFF);
     }
 
     /* task */
@@ -164,12 +180,19 @@ void RZ_A2_EMAC::set_memory_manager(EMACMemoryManager &mem_mngr)
     memory_manager = &mem_mngr;
 }
 
-void RZ_A2_EMAC::_callback(void* arg)
+void RZ_A2_EMAC::_callback_pcb(void* arg)
 {
-    get_instance().callback(arg);
+    ether_cb_arg_t * p_cb_arg = (ether_cb_arg_t *)arg;
+    get_instance(p_cb_arg->channel).callback_pcb(arg);
 }
 
-void RZ_A2_EMAC::callback(void* arg)
+void RZ_A2_EMAC::_callback_hnd(void* arg)
+{
+    ether_cb_arg_t * p_cb_arg = (ether_cb_arg_t *)arg;
+    get_instance(p_cb_arg->channel).callback_hnd(arg);
+}
+
+void RZ_A2_EMAC::callback_pcb(void* arg)
 {
     ether_cb_arg_t * p_cb_arg = (ether_cb_arg_t *)arg;
 
@@ -180,7 +203,15 @@ void RZ_A2_EMAC::callback(void* arg)
     } else {
         // do nothing
     }
+}
 
+void RZ_A2_EMAC::callback_hnd(void* arg)
+{
+    ether_cb_arg_t * p_cb_arg = (ether_cb_arg_t *)arg;
+
+    if (p_cb_arg->status_eesr & 0x00040000) {
+        sem_recv.release();
+    }
 }
 
 void RZ_A2_EMAC::recv_task(void)
@@ -190,36 +221,35 @@ void RZ_A2_EMAC::recv_task(void)
     uint8_t * pread_buffer_address;
 
     while (1) {
+        sem_recv.wait();
+
         /* (1) Retrieve the receive buffer location controlled by the  descriptor. */
-        ret = R_ETHER_Read_ZC2(channel, (void **)&pread_buffer_address);
+        ret = R_ETHER_Read_ZC2(_channel, (void **)&pread_buffer_address);
 
         /* When there is data to receive */
         if (ret > ETHER_NO_DATA) {
             while (1) {
                 buf = memory_manager->alloc_heap(ret, 0);
                 if (buf != NULL) {
-
                     /* (2) Copy the data read from the receive buffer which is controlled by the descriptor to
                      the buffer which is specified by the user (up to 1024 bytes). */
                     memcpy(memory_manager->get_ptr(buf), pread_buffer_address, (uint32_t)memory_manager->get_len(buf));
 
                     /* (3) Read the receive data from the receive buffer controlled by the descriptor,
                      and then release the receive buffer. */
-                    R_ETHER_Read_ZC2_BufRelease(channel);
+                    R_ETHER_Read_ZC2_BufRelease(_channel);
 
                     emac_link_input_cb(buf);
                     break;
                 }
                 osDelay(5);
             }
-        } else {
-            osDelay(1);
         }
     }
 }
 
 void RZ_A2_EMAC::phy_task(void)
 {
-    R_ETHER_LinkProcess(channel);
+    R_ETHER_LinkProcess(_channel);
 }
 
