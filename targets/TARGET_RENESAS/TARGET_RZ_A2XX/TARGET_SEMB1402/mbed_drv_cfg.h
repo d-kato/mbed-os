@@ -38,6 +38,9 @@
                                                   /**< Maximum size per one writing is 256 byte and minimum size per one writing is 1 byte */
 #define FLASH_SECTOR_SIZE          4096           /**< Flash Memory sector size (interleaving off) */
 
+/* HyperRAM */
+#define USE_HYPERRAM
+
 /* printf not use */
 #define PRINTF_NOT_USE
 

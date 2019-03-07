@@ -22,12 +22,12 @@
 
 MEMORY
 {
-  ROM   (rx)  : ORIGIN = 0x00000000, LENGTH = 0x02000000
   BOOT_LOADER (rx) : ORIGIN = BOOT_LOADER_ADDR, LENGTH = BOOT_LOADER_SIZE 
   SFLASH (rx) : ORIGIN = SFLASH_ADDR, LENGTH = SFLASH_SIZE 
   L_TTB (rw)  : ORIGIN = 0x80000000, LENGTH = 0x00004000 
   RAM (rwx) : ORIGIN = 0x80004000, LENGTH = 0x002FC000
   RAM_NC (rwx) : ORIGIN = 0x80300000, LENGTH = 0x00100000
+  RAM_HYPER (rwx) : ORIGIN = 0x40000000, LENGTH = 0x00800000
 }
 
 /* Linker script to place sections and symbol values. Should be used together
@@ -125,6 +125,9 @@ SECTIONS
         LONG (__etext2)
         LONG (__nc_data_start)
         LONG (__nc_data_end - __nc_data_start)
+        LONG (__etext3)
+        LONG (__hyper_data_start)
+        LONG (__hyper_data_end - __hyper_data_start)
         LONG (LOADADDR(.ram_code))
         LONG (ADDR(.ram_code))
         LONG (SIZEOF(.ram_code))
@@ -139,6 +142,8 @@ SECTIONS
         LONG (__bss_end__ - __bss_start__)
         LONG (__nc_bss_start)
         LONG (__nc_bss_end - __nc_bss_start)
+        LONG (__hyper_bss_start)
+        LONG (__hyper_bss_end - __hyper_bss_start)
         __zero_table_end__ = .;
     } > SFLASH
 
@@ -260,4 +265,29 @@ SECTIONS
         __nc_bss_end = .;
         Image$$ZI_DATA_NC$$Limit = .;
     } > RAM_NC
+
+
+    /* HyperRAM */
+    __etext3 = __etext2 + SIZEOF(.nc_data);
+    .hyper_data : AT (__etext3)
+    {
+        Image$$RW_DATA_HYPER$$Base = .;
+        __hyper_data_start = .;
+        *(HYPER_DATA)
+
+        . = ALIGN(8);
+        __hyper_data_end = .;
+        Image$$RW_DATA_HYPER$$Limit = .;
+    } > RAM_HYPER
+
+    .hyper_bss (NOLOAD) :
+    {
+        Image$$ZI_DATA_HYPER$$Base = .;
+        __hyper_bss_start = .;
+        *(HYPER_BSS)
+
+        . = ALIGN(8);
+        __hyper_bss_end = .;
+        Image$$ZI_DATA_HYPER$$Limit = .;
+    } > RAM_HYPER
 }

@@ -29,6 +29,7 @@
 #include <RZ_A2M.h>
 #include "RZ_A2_Init.h"
 #include "irq_ctrl.h"
+#include "mbed_drv_cfg.h"
 
 extern void HyperRAM_Init(void);
 
@@ -118,7 +119,9 @@ void SystemInit (void)
     RZ_A2_InitClock();
     RZ_A2_InitBus();
 
-//    HyperRAM_Init();
+#if defined(USE_HYPERRAM)
+    HyperRAM_Init();
+#endif
 
     // Invalidate entire Unified TLB
     __set_TLBIALL(0);
