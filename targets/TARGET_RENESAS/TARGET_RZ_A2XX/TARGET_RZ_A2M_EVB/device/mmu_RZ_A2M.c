@@ -165,13 +165,13 @@
 #include "RZ_A2M.h"
 
 //Import symbols from linker
+#if !defined ( __ICCARM__ )
+extern uint32_t Image$$TTB$$ZI$$Base;
+#endif 
 extern uint32_t Image$$VECTORS$$Base;
 extern uint32_t Image$$RO_DATA$$Base;
 extern uint32_t Image$$RW_DATA$$Base;
 extern uint32_t Image$$RW_IRAM1$$Base;
-#if !defined ( __ICCARM__ )
-extern uint32_t Image$$TTB$$ZI$$Base;
-#endif 
 extern uint32_t Image$$RW_DATA_NC$$Base;
 extern uint32_t Image$$ZI_DATA_NC$$Base;
 
@@ -187,17 +187,13 @@ extern uint32_t Image$$ZI_DATA_NC$$Limit;
 #define RO_DATA_SIZE    (((uint32_t)Image$$RO_DATA$$Limit >> 20) - ((uint32_t)Image$$RO_DATA$$Base >> 20) + 1)
 #define RW_DATA_SIZE    (((uint32_t)Image$$RW_DATA$$Limit >> 20) - ((uint32_t)Image$$RW_DATA$$Base >> 20) + 1)
 #define RW_IRAM1_SIZE   (((uint32_t)Image$$RW_IRAM1$$Limit >> 20) - ((uint32_t)Image$$RW_IRAM1$$Base >> 20) + 1)
+#define RW_DATA_NC_SIZE (((uint32_t)Image$$RW_DATA_NC$$Limit >> 20) - ((uint32_t)Image$$RW_DATA_NC$$Base >> 20) + 1)
+#define ZI_DATA_NC_SIZE (((uint32_t)Image$$ZI_DATA_NC$$Limit >> 20) - ((uint32_t)Image$$ZI_DATA_NC$$Base >> 20) + 1)
 #else
 #define VECTORS_SIZE    (((uint32_t)&Image$$VECTORS$$Limit >> 20) - ((uint32_t)&Image$$VECTORS$$Base >> 20) + 1)
 #define RO_DATA_SIZE    (((uint32_t)&Image$$RO_DATA$$Limit >> 20) - ((uint32_t)&Image$$RO_DATA$$Base >> 20) + 1)
 #define RW_DATA_SIZE    (((uint32_t)&Image$$RW_DATA$$Limit >> 20) - ((uint32_t)&Image$$RW_DATA$$Base >> 20) + 1)
 #define RW_IRAM1_SIZE   (((uint32_t)&Image$$RW_IRAM1$$Limit >> 20) - ((uint32_t)&Image$$RW_IRAM1$$Base >> 20) + 1)
-#endif
-
-#if defined( __ICCARM__ )
-#define RW_DATA_NC_SIZE (((uint32_t)Image$$RW_DATA_NC$$Limit >> 20) - ((uint32_t)Image$$RW_DATA_NC$$Base >> 20) + 1)
-#define ZI_DATA_NC_SIZE (((uint32_t)Image$$ZI_DATA_NC$$Limit >> 20) - ((uint32_t)Image$$ZI_DATA_NC$$Base >> 20) + 1)
-#else
 #define RW_DATA_NC_SIZE (((uint32_t)&Image$$RW_DATA_NC$$Limit >> 20) - ((uint32_t)&Image$$RW_DATA_NC$$Base >> 20) + 1)
 #define ZI_DATA_NC_SIZE (((uint32_t)&Image$$ZI_DATA_NC$$Limit >> 20) - ((uint32_t)&Image$$ZI_DATA_NC$$Base >> 20) + 1)
 #endif
@@ -222,11 +218,15 @@ uint32_t Image$$VECTORS$$Base;
 uint32_t Image$$RO_DATA$$Base;
 uint32_t Image$$RW_DATA$$Base;
 uint32_t Image$$RW_IRAM1$$Base;
+uint32_t Image$$RW_DATA_NC$$Base;
+uint32_t Image$$ZI_DATA_NC$$Base;
 
 uint32_t Image$$VECTORS$$Limit;
 uint32_t Image$$RO_DATA$$Limit;
 uint32_t Image$$RW_DATA$$Limit;
 uint32_t Image$$RW_IRAM1$$Limit;
+uint32_t Image$$RW_DATA_NC$$Limit;
+uint32_t Image$$ZI_DATA_NC$$Limit;
 #endif
 
 void MMU_CreateTranslationTable(void)
@@ -237,15 +237,22 @@ void MMU_CreateTranslationTable(void)
 #pragma section=".rodata"
 #pragma section=".rwdata"
 #pragma section=".bss"
+#pragma section="NC_DATA"
+#pragma section=".mirrorram"
+#pragma section="NC_BSS"
 
     Image$$VECTORS$$Base = (uint32_t) __section_begin(".intvec");
     Image$$VECTORS$$Limit= ((uint32_t)__section_begin(".intvec")+(uint32_t)__section_size(".intvec"));
     Image$$RO_DATA$$Base = (uint32_t) __section_begin(".rodata");
     Image$$RO_DATA$$Limit= ((uint32_t)__section_begin(".rodata")+(uint32_t)__section_size(".rodata"));
-    Image$$RW_DATA$$Base = (uint32_t) __section_begin(".rwdata"); 
+    Image$$RW_DATA$$Base = (uint32_t) __section_begin(".rwdata");
     Image$$RW_DATA$$Limit= ((uint32_t)__section_begin(".rwdata")+(uint32_t)__section_size(".rwdata"));
-    Image$$RW_IRAM1$$Base = (uint32_t) __section_begin(".bss");  
+    Image$$RW_IRAM1$$Base = (uint32_t) __section_begin(".bss");
     Image$$RW_IRAM1$$Limit= ((uint32_t)__section_begin(".bss")+(uint32_t)__section_size(".bss"));
+    Image$$RW_DATA_NC$$Base = (uint32_t) __section_begin("NC_DATA");
+    Image$$RW_DATA_NC$$Limit= ((uint32_t)__section_begin("NC_DATA")+(uint32_t)__section_size("NC_DATA"));
+    Image$$ZI_DATA_NC$$Base = (uint32_t) __section_begin(".mirrorram");
+    Image$$ZI_DATA_NC$$Limit= ((uint32_t)__section_begin(".mirrorram")+(uint32_t)__section_size("NC_BSS"));
 #endif
     /*
      * Generate descriptors. Refer to core_ca.h to get information about attributes

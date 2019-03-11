@@ -216,7 +216,7 @@ void i2c_init(i2c_t *obj, PinName sda, PinName scl) {
     obj->i2c.index = pinmap_merge(i2c_sda, i2c_scl);
     MBED_ASSERT((int)obj->i2c.index != NC);
 
-    obj->i2c.i2c = RIIC[obj->i2c.index];
+    obj->i2c.i2c = (volatile struct st_riic *)RIIC[obj->i2c.index];
 
     /* enable power */
     i2c_power_enable(obj);

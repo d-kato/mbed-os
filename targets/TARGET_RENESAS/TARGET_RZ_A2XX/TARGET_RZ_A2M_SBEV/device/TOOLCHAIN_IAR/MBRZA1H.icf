@@ -19,7 +19,7 @@ define symbol __ICFEDIT_region_ROM_end__     = MBED_APP_START + MBED_APP_SIZE - 
 define symbol __ICFEDIT_region_TTB_start__   = 0x80000000;
 define symbol __ICFEDIT_region_TTB_end__     = 0x80003FFF;
 define symbol __ICFEDIT_region_RAM_start__   = 0x80004000;
-define symbol __ICFEDIT_region_RAM_end__     = 0x803FFFFF;
+define symbol __ICFEDIT_region_RAM_end__     = 0x802FFFFF;
 
 /*-Sizes-*/
 define symbol __ICFEDIT_size_cstack__   = 0x00004000;
@@ -34,15 +34,15 @@ define symbol __ICFEDIT_size_heap__     = 0x00080000;
 define symbol __ICFEDIT_region_RetRAM_start__       = 0x80000000;
 define symbol __ICFEDIT_region_RetRAM_end__         = 0x8002FFFF;
 
-define symbol __ICFEDIT_region_MirrorRAM_start__    = 0x80300000;
-define symbol __ICFEDIT_region_MirrorRAM_end__      = 0x803FFFFF;
+define symbol __ICFEDIT_region_NcRAM_start__        = 0x80300000;
+define symbol __ICFEDIT_region_NcRAM_end__          = 0x803FFFFF;
 
 define memory mem with size = 4G;
 
 define region ROM_region          = mem:[from __ICFEDIT_region_ROM_start__          to __ICFEDIT_region_ROM_end__];
 define region RAM_region          = mem:[from __ICFEDIT_region_RAM_start__          to __ICFEDIT_region_RAM_end__];
 define region RetRAM_region       = mem:[from __ICFEDIT_region_RetRAM_start__       to __ICFEDIT_region_RetRAM_end__];
-define region MirrorRAM_region    = mem:[from __ICFEDIT_region_MirrorRAM_start__    to __ICFEDIT_region_MirrorRAM_end__];
+define region NcRAM_region        = mem:[from __ICFEDIT_region_NcRAM_start__        to __ICFEDIT_region_NcRAM_end__];
 
 define block ROM_FIXED_ORDER with fixed order { ro code, ro data };
 define block CSTACK    with alignment = 8, size = __ICFEDIT_size_cstack__   { };
@@ -65,4 +65,4 @@ place in RAM_region     { readwrite,
                           block UND_STACK, block ABT_STACK, block HEAP };
 
 place in RetRAM_region       { section .retram };
-place in MirrorRAM_region    { section .mirrorram };
+place in NcRAM_region        { section NC_DATA, section .mirrorram, section NC_BSS };
