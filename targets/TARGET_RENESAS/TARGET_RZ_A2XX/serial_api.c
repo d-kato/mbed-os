@@ -117,7 +117,7 @@ void serial_init(serial_t *obj, PinName tx, PinName rx) {
     obj->serial.uart = SCIFA[ch_no];
 
     /* ==== Module standby clear ==== */
-    CPG.STBCR4.BIT.MSTP43 = 0;
+    CPG.STBCR4.BYTE &= ~(0x80 >> ch_no);
     dummy_buf = CPG.STBCR4.BYTE;
     (void)dummy_buf;
 
