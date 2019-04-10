@@ -60,7 +60,6 @@ struct port_s {
 
 struct serial_s {
     uint32_t ch;
-    int index;
     volatile struct st_scifa* uart;
 };
 

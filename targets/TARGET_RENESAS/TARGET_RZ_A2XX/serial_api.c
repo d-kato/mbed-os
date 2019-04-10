@@ -327,8 +327,8 @@ void serial_format(serial_t *obj, int data_bits, SerialParity parity, int stop_b
  * INTERRUPTS HANDLING
  ******************************************************************************/
 
-static void uart_tx_irq(uint32_t index) {
-    serial_t *obj = uart_data[index].tranferring_obj;
+static void uart_tx_irq(uint32_t ch) {
+    serial_t *obj = uart_data[ch].tranferring_obj;
     if (obj) {
         int i = obj->tx_buff.length - obj->tx_buff.pos;
         if (0 < i) {
@@ -343,24 +343,24 @@ static void uart_tx_irq(uint32_t index) {
                 obj->serial.uart->FSR.WORD &= ~0x0060u;
             } while (--i);
         } else {
-            uart_data[index].tranferring_obj = NULL;
-            uart_data[index].event = SERIAL_EVENT_TX_COMPLETE;
-            ((void (*)())uart_data[index].async_tx_callback)();
+            uart_data[ch].tranferring_obj = NULL;
+            uart_data[ch].event = SERIAL_EVENT_TX_COMPLETE;
+            ((void (*)())uart_data[ch].async_tx_callback)();
         }
     }
 
-    irq_handler(uart_data[index].serial_irq_id, TxIrq);
+    irq_handler(uart_data[ch].serial_irq_id, TxIrq);
 }
 
-static void uart_rx_irq(uint32_t index) {
-    serial_t *obj = uart_data[index].receiving_obj;
+static void uart_rx_irq(uint32_t ch) {
+    serial_t *obj = uart_data[ch].receiving_obj;
     if (obj) {
         if (obj->serial.uart->LSR.BIT.ORER == 1) {
             obj->serial.uart->LSR.BIT.ORER = 0;
-            if (uart_data[index].wanted_rx_events & SERIAL_EVENT_RX_OVERRUN_ERROR) {
+            if (uart_data[ch].wanted_rx_events & SERIAL_EVENT_RX_OVERRUN_ERROR) {
                 serial_rx_abort_asynch(obj);
-                uart_data[index].event = SERIAL_EVENT_RX_OVERRUN_ERROR;
-                ((void (*)())uart_data[index].async_rx_callback)();
+                uart_data[ch].event = SERIAL_EVENT_RX_OVERRUN_ERROR;
+                ((void (*)())uart_data[ch].async_rx_callback)();
             }
             return;
         }
@@ -371,54 +371,54 @@ static void uart_rx_irq(uint32_t index) {
             if (c == obj->char_match && ! obj->char_found) {
                 obj->char_found = 1;
                 if (obj->rx_buff.pos == obj->rx_buff.length) {
-                    if (uart_data[index].wanted_rx_events & SERIAL_EVENT_RX_COMPLETE) {
-                        uart_data[index].event = SERIAL_EVENT_RX_COMPLETE;
+                    if (uart_data[ch].wanted_rx_events & SERIAL_EVENT_RX_COMPLETE) {
+                        uart_data[ch].event = SERIAL_EVENT_RX_COMPLETE;
                     }
                 }
-                if (uart_data[index].wanted_rx_events & SERIAL_EVENT_RX_CHARACTER_MATCH) {
-                    uart_data[index].event |= SERIAL_EVENT_RX_CHARACTER_MATCH;
+                if (uart_data[ch].wanted_rx_events & SERIAL_EVENT_RX_CHARACTER_MATCH) {
+                    uart_data[ch].event |= SERIAL_EVENT_RX_CHARACTER_MATCH;
                 }
-                if (uart_data[index].event) {
-                    uart_data[index].receiving_obj = NULL;
-                    ((void (*)())uart_data[index].async_rx_callback)();
+                if (uart_data[ch].event) {
+                    uart_data[ch].receiving_obj = NULL;
+                    ((void (*)())uart_data[ch].async_rx_callback)();
                 }
             } else if (obj->rx_buff.pos == obj->rx_buff.length) {
-                uart_data[index].receiving_obj = NULL;
-                if (uart_data[index].wanted_rx_events & SERIAL_EVENT_RX_COMPLETE) {
-                    uart_data[index].event = SERIAL_EVENT_RX_COMPLETE;
-                    ((void (*)())uart_data[index].async_rx_callback)();
+                uart_data[ch].receiving_obj = NULL;
+                if (uart_data[ch].wanted_rx_events & SERIAL_EVENT_RX_COMPLETE) {
+                    uart_data[ch].event = SERIAL_EVENT_RX_COMPLETE;
+                    ((void (*)())uart_data[ch].async_rx_callback)();
                 }
             }
         } else {
             serial_rx_abort_asynch(obj);
-            if (uart_data[index].wanted_rx_events & (SERIAL_EVENT_RX_PARITY_ERROR | SERIAL_EVENT_RX_FRAMING_ERROR)) {
-                uart_data[index].event = SERIAL_EVENT_RX_PARITY_ERROR | SERIAL_EVENT_RX_FRAMING_ERROR;
+            if (uart_data[ch].wanted_rx_events & (SERIAL_EVENT_RX_PARITY_ERROR | SERIAL_EVENT_RX_FRAMING_ERROR)) {
+                uart_data[ch].event = SERIAL_EVENT_RX_PARITY_ERROR | SERIAL_EVENT_RX_FRAMING_ERROR;
                 if (obj->serial.uart->FSR.BIT.PER == 1) {
-                    uart_data[index].event = SERIAL_EVENT_RX_PARITY_ERROR;
+                    uart_data[ch].event = SERIAL_EVENT_RX_PARITY_ERROR;
                 } else if (obj->serial.uart->FSR.BIT.FER == 1) {
-                    uart_data[index].event = SERIAL_EVENT_RX_FRAMING_ERROR;
+                    uart_data[ch].event = SERIAL_EVENT_RX_FRAMING_ERROR;
                 }
-                ((void (*)())uart_data[index].async_rx_callback)();
+                ((void (*)())uart_data[ch].async_rx_callback)();
             }
             return;
         }
     }
 
-    irq_handler(uart_data[index].serial_irq_id, RxIrq);
+    irq_handler(uart_data[ch].serial_irq_id, RxIrq);
 }
 
-static void uart_err_irq(uint32_t index) {
-    serial_t *obj = uart_data[index].receiving_obj;
+static void uart_err_irq(uint32_t ch) {
+    serial_t *obj = uart_data[ch].receiving_obj;
     if (obj) {
         serial_irq_err_set(obj, 0);
-        if (uart_data[index].wanted_rx_events & (SERIAL_EVENT_RX_PARITY_ERROR | SERIAL_EVENT_RX_FRAMING_ERROR)) {
-            uart_data[index].event = SERIAL_EVENT_RX_PARITY_ERROR | SERIAL_EVENT_RX_FRAMING_ERROR;
+        if (uart_data[ch].wanted_rx_events & (SERIAL_EVENT_RX_PARITY_ERROR | SERIAL_EVENT_RX_FRAMING_ERROR)) {
+            uart_data[ch].event = SERIAL_EVENT_RX_PARITY_ERROR | SERIAL_EVENT_RX_FRAMING_ERROR;
             if (obj->serial.uart->FSR.BIT.PER == 1) {
-                uart_data[index].event = SERIAL_EVENT_RX_PARITY_ERROR;
+                uart_data[ch].event = SERIAL_EVENT_RX_PARITY_ERROR;
             } else if (obj->serial.uart->FSR.BIT.FER == 1) {
-                uart_data[index].event = SERIAL_EVENT_RX_FRAMING_ERROR;
+                uart_data[ch].event = SERIAL_EVENT_RX_FRAMING_ERROR;
             }
-            ((void (*)())uart_data[index].async_rx_callback)();
+            ((void (*)())uart_data[ch].async_rx_callback)();
         }
         serial_rx_abort_asynch(obj);
 
@@ -485,7 +485,7 @@ static void uart4_er_irq(void) {
 
 void serial_irq_handler(serial_t *obj, uart_irq_handler handler, uint32_t id) {
     irq_handler = handler;
-    uart_data[obj->serial.index].serial_irq_id = id;
+    uart_data[obj->serial.ch].serial_irq_id = id;
 }
 
 static void serial_irq_set_irq(IRQn_Type IRQn, IRQHandler handler, uint32_t enable) {
@@ -499,17 +499,17 @@ static void serial_irq_set_irq(IRQn_Type IRQn, IRQHandler handler, uint32_t enab
 }
 
 static void serial_irq_err_set(serial_t *obj, uint32_t enable) {
-    serial_irq_set_irq(irq_set_tbl[obj->serial.index][2], hander_set_tbl[obj->serial.index][2], enable);
+    serial_irq_set_irq(irq_set_tbl[obj->serial.ch][2], hander_set_tbl[obj->serial.ch][2], enable);
 }
 
 void serial_irq_set(serial_t *obj, SerialIrq irq, uint32_t enable) {
     IRQn_Type IRQn;
     IRQHandler handler;
 
-    IRQn = irq_set_tbl[obj->serial.index][irq];
-    handler = hander_set_tbl[obj->serial.index][irq];
+    IRQn = irq_set_tbl[obj->serial.ch][irq];
+    handler = hander_set_tbl[obj->serial.ch][irq];
 
-    if ((obj->serial.index >= 0) && (obj->serial.index <= 7)) {
+    if ((obj->serial.ch >= 0) && (obj->serial.ch < UART_NUM)) {
         serial_irq_set_irq(IRQn, handler, enable);
     }
 }
@@ -658,7 +658,7 @@ static uint8_t serial_available_buffer(serial_t *obj) {
 int serial_tx_asynch(serial_t *obj, const void *tx, size_t tx_length, uint8_t tx_width, uint32_t handler, uint32_t event, DMAUsage hint) {
     int i;
     buffer_t *buf = &obj->tx_buff;
-    struct serial_global_data_s *data = uart_data + obj->serial.index;
+    struct serial_global_data_s *data = uart_data + obj->serial.ch;
 
     if (tx_length == 0) {
         return 0;
@@ -691,7 +691,7 @@ int serial_tx_asynch(serial_t *obj, const void *tx, size_t tx_length, uint8_t tx
 void serial_rx_asynch(serial_t *obj, void *rx, size_t rx_length, uint8_t rx_width,
    uint32_t handler, uint32_t event, uint8_t char_match, DMAUsage hint) {
     buffer_t *buf = &obj->rx_buff;
-    struct serial_global_data_s *data = uart_data + obj->serial.index;
+    struct serial_global_data_s *data = uart_data + obj->serial.ch;
 
     if (rx_length == 0) {
         return;
@@ -713,25 +713,25 @@ void serial_rx_asynch(serial_t *obj, void *rx, size_t rx_length, uint8_t rx_widt
 }
 
 uint8_t serial_tx_active(serial_t *obj) {
-    return uart_data[obj->serial.index].tranferring_obj != NULL;
+    return uart_data[obj->serial.ch].tranferring_obj != NULL;
 }
 
 uint8_t serial_rx_active(serial_t *obj) {
-    return uart_data[obj->serial.index].receiving_obj != NULL;
+    return uart_data[obj->serial.ch].receiving_obj != NULL;
 }
 
 int serial_irq_handler_asynch(serial_t *obj) {
-    return uart_data[obj->serial.index].event;
+    return uart_data[obj->serial.ch].event;
 }
 
 void serial_tx_abort_asynch(serial_t *obj) {
-    uart_data[obj->serial.index].tranferring_obj = NULL;
+    uart_data[obj->serial.ch].tranferring_obj = NULL;
     obj->serial.uart->FCR.BIT.TFRST = 1;
     obj->serial.uart->FCR.BIT.TFRST = 0;
 }
 
 void serial_rx_abort_asynch(serial_t *obj) {
-    uart_data[obj->serial.index].receiving_obj = NULL;
+    uart_data[obj->serial.ch].receiving_obj = NULL;
     obj->serial.uart->FCR.BIT.RFRST = 1;
     obj->serial.uart->FCR.BIT.RFRST = 0;
 }
