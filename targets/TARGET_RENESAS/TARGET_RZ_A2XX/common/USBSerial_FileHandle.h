@@ -56,7 +56,7 @@ public:
      */
     virtual ssize_t read(void *buffer, size_t size) {
         uint32_t data_read = 0;
-        USBCDC::receive_nb((uint8_t *)buffer, size, &data_read);
+        USBCDC::receive((uint8_t *)buffer, size, &data_read);
         return (ssize_t)data_read;
     }
 
@@ -105,7 +105,15 @@ public:
      *  @return         Negative error code on failure
      */
     virtual int isatty() {
-        return 1;
+        return true;
+    }
+
+    /** Get the size of the file
+     *
+     *  @return         Size of the file in bytes
+     */
+    virtual off_t size() {
+        return -EINVAL;
     }
 
     /** Check for poll event flags
