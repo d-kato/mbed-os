@@ -19,6 +19,7 @@
 
 #include "EMAC.h"
 #include "rtos/Thread.h"
+#include "rtos/ThisThread.h"
 #include "rtos/Semaphore.h"
 
 class RZ_A2_EMAC : public EMAC {
@@ -154,6 +155,7 @@ private:
     uint8_t hwaddr[6];
     bool hwaddr_set;
     bool power_on;
+    bool emac_started;
     emac_link_input_cb_t emac_link_input_cb; /**< Callback for incoming data */
     emac_link_state_change_cb_t emac_link_state_cb; /**< Link state change callback */
     rtos::Thread recvThread;
@@ -162,6 +164,8 @@ private:
 
     static void _callback_pcb(void*);
     static void _callback_hnd(void*);
+    void start_emac(void);
+    void stop_emac(void);
     void callback_pcb(void*);
     void callback_hnd(void*);
     void recv_task(void);

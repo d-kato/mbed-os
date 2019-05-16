@@ -46,7 +46,7 @@ RZ_A2_EMAC &RZ_A2_EMAC::get_instance(uint32_t channel)
 }
 
 RZ_A2_EMAC::RZ_A2_EMAC(uint32_t channel) : _channel(channel), hwaddr(), hwaddr_set(false), power_on(false),
-    recvThread(osPriorityNormal, 896), sem_recv(0)
+    emac_started(false), recvThread(osPriorityNormal, 896), phy_task_handle(0), sem_recv(0)
 {
 }
 
@@ -79,11 +79,7 @@ void RZ_A2_EMAC::set_hwaddr(const uint8_t *addr)
 {
     memcpy(hwaddr, addr, sizeof(hwaddr));
     hwaddr_set = true;
-
-    /* Reconnect */
-    if (power_on != false) {
-        R_ETHER_Open_ZC2(_channel, hwaddr, ETHER_FLAG_OFF);
-    }
+    start_emac();
 }
 
 bool RZ_A2_EMAC::link_out(emac_mem_buf_t *buf)
@@ -128,40 +124,15 @@ bool RZ_A2_EMAC::link_out(emac_mem_buf_t *buf)
 
 bool RZ_A2_EMAC::power_up()
 {
-    ether_param_t param;
-
-    if (power_on != false) {
-        return true;
-    }
-
-    /* Initialize memory which ETHERC/EDMAC is used */
-    R_ETHER_Initial();
-
-    /* Set the callback function */
-    param.ether_callback.pcb_func    = &_callback_pcb;
-    R_ETHER_Control(CONTROL_SET_CALLBACK, param);
-
-    /* Set the callback function */
-    param.ether_callback.pcb_int_hnd    = &_callback_hnd;
-    R_ETHER_Control(CONTROL_SET_INT_HANDLER, param);
-
-    param.channel = _channel;
-    R_ETHER_Control(CONTROL_POWER_ON, param);
-
-    if (hwaddr_set != false) {
-        R_ETHER_Open_ZC2(_channel, hwaddr, ETHER_FLAG_OFF);
-    }
-
-    /* task */
-    recvThread.start(mbed::callback(this, &RZ_A2_EMAC::recv_task));
-    phy_task_handle = mbed::mbed_event_queue()->call_every(200, mbed::callback(this, &RZ_A2_EMAC::phy_task));
-
     power_on = true;
+    start_emac();
+
     return true;
 }
 
 void RZ_A2_EMAC::power_down()
 {
+    stop_emac();
     power_on = false;
 }
 
@@ -205,6 +176,53 @@ void RZ_A2_EMAC::_callback_hnd(void* arg)
 {
     ether_cb_arg_t * p_cb_arg = (ether_cb_arg_t *)arg;
     get_instance(p_cb_arg->channel).callback_hnd(arg);
+}
+
+void RZ_A2_EMAC::start_emac(void)
+{
+    ether_param_t param;
+
+    if ((!power_on) || (!hwaddr_set)) {
+        return;
+    }
+
+    if (emac_started) {
+        return;
+    }
+
+    /* PHY power on wait */
+    rtos::ThisThread::sleep_for(ETHER_CFG_PHY_WAIT);
+
+    /* Initialize memory which ETHERC/EDMAC is used */
+    R_ETHER_Initial();
+
+    /* Set the callback function */
+    param.ether_callback.pcb_func    = &_callback_pcb;
+    R_ETHER_Control(CONTROL_SET_CALLBACK, param);
+
+    /* Set the callback function */
+    param.ether_callback.pcb_int_hnd    = &_callback_hnd;
+    R_ETHER_Control(CONTROL_SET_INT_HANDLER, param);
+
+    param.channel = _channel;
+    R_ETHER_Control(CONTROL_POWER_ON, param);
+
+    R_ETHER_Open_ZC2(_channel, hwaddr, ETHER_FLAG_OFF);
+
+    /* task */
+    recvThread.start(mbed::callback(this, &RZ_A2_EMAC::recv_task));
+    phy_task_handle = mbed::mbed_event_queue()->call_every(200, mbed::callback(this, &RZ_A2_EMAC::phy_task));
+
+    emac_started = true;
+}
+
+void RZ_A2_EMAC::stop_emac(void)
+{
+    if (emac_started) {
+        mbed::mbed_event_queue()->cancel(phy_task_handle);
+        recvThread.terminate();
+    }
+    emac_started = false;
 }
 
 void RZ_A2_EMAC::callback_pcb(void* arg)

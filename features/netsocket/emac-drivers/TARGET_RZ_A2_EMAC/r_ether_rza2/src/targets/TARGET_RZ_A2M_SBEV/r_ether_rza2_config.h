@@ -78,6 +78,9 @@ extern "C" {
  */
     #define ETHER_CFG_USE_LINKSTA                       (0)     /* This setting is reflected in all channels */
 
+/* Wait time needed to access PHY after reset.(ms) */
+    #define ETHER_CFG_PHY_WAIT                          (150)
+
 /* Definition of whether or not to use KSZ8041NL of the Micrel Inc.
  0 = unused
  1 = use
