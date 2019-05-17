@@ -72,11 +72,21 @@ uint8_t RZ_A2_EMAC::get_hwaddr_size() const
 
 bool RZ_A2_EMAC::get_hwaddr(uint8_t *addr) const
 {
-    return false;
+    if (!hwaddr_set) {
+        /* If a MAC address is prepared as a board, add processing here. */
+        return false;
+    }
+    memcpy(addr, hwaddr, sizeof(hwaddr));
+    return true;
 }
 
 void RZ_A2_EMAC::set_hwaddr(const uint8_t *addr)
 {
+    if (hwaddr_set) {
+        if (memcmp(hwaddr, addr, sizeof(hwaddr)) != 0) {
+            stop_emac();
+        }
+    }
     memcpy(hwaddr, addr, sizeof(hwaddr));
     hwaddr_set = true;
     start_emac();
