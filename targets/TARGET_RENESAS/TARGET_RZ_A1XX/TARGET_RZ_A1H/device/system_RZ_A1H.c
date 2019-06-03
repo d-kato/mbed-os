@@ -91,7 +91,11 @@ void SystemInit (void)
 {
 /*       do not use global variables because this function is called before
          reaching pre-main. RW section may be overwritten afterwards.          */
-  
+#if ((__FPU_PRESENT == 1) && (__FPU_USED == 1))
+  // Enable FPU
+  __FPU_Enable();
+#endif
+
   // Enable SRAM write access
   CPG.SYSCR3 = 0x0F;
 
@@ -128,11 +132,6 @@ void SystemInit (void)
   L2C_InvAllByWay();
   // Enable L2C
   L2C_Enable();
-#endif
-
-#if ((__FPU_PRESENT == 1) && (__FPU_USED == 1))
-  // Enable FPU
-  __FPU_Enable();
 #endif
 
   // IRQ Initialize
