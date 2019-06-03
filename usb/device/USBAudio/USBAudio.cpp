@@ -20,6 +20,9 @@
 #include "USBAudio_Types.h"
 #include "EndpointResolver.h"
 #include "usb_phy_api.h"
+#if defined(TARGET_RZ_A2XX) // provisional
+#include "USBPhyHw.h"
+#endif
 
 #define SAMPLE_SIZE                 2
 #define XFER_FREQUENCY_HZ           1000
@@ -187,6 +190,11 @@ void USBAudio::_init(uint32_t frequency_rx, uint8_t channel_count_rx, uint32_t f
     _channel_config_tx = (_tx_channel_count == 1) ? CHANNEL_M : CHANNEL_L + CHANNEL_R;
 
     _build_configuration_desc();
+
+#if defined(TARGET_RZ_A2XX) // provisional
+    // Since the class driver is Audio class 1.0, set the USB speed to Full Speed.
+    USBPhyHw::set_usb_speed(0); // Full Speed
+#endif
 }
 
 USBAudio::~USBAudio()
