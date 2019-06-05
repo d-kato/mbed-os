@@ -26,10 +26,10 @@ uint32_t gpio_set(PinName pin) {
 void gpio_init(gpio_t *obj, PinName pin) {
     uint32_t reg_group = PINGROUP(pin);
 
+    obj->pin     = pin;
     if (reg_group > GPIO_GROUP_MAX) return;
 
     obj->mask    = gpio_set(pin);
-    obj->pin     = pin;
     obj->reg_dir = (volatile uint16_t *)PDR(reg_group);
     obj->reg_set = (volatile uint8_t  *)PODR(reg_group);
     obj->reg_in  = (volatile uint8_t  *)PIDR(reg_group);
