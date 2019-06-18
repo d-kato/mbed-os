@@ -19,9 +19,9 @@
 #include "USBSerial_FileHandle.h"
 #include "platform/mbed_wait_api.h"
 
-static USBSerial_FileHandle console(false);
+static mbed::USBSerial_FileHandle console(false);
 
-FileHandle *mbed::mbed_target_override_console(int fd)
+mbed::FileHandle *mbed::mbed_target_override_console(int fd)
 {
     console.connect();
     for (int i = 0; (i < 50) && (console.ready() == false); i++) {
