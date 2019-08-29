@@ -172,10 +172,10 @@ extern "C" {
  */
 typedef struct DescriptorS
 {
-    uint32_t           status;
-    uint16_t           size;
-    uint16_t           bufsize;
-    uint8_t            *buf_p;
+    volatile uint32_t  status;
+    volatile uint16_t  size;
+    volatile uint16_t  bufsize;
+    volatile uint8_t   *buf_p;
     struct DescriptorS *next;
 } descriptor_t;
 
