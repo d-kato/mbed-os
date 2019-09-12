@@ -577,7 +577,6 @@ static int32_t spibsc_transfer(st_spibsc_spimd_reg_t * regset)
      /* Enable/Disable */
      RegWwrite_32(&SPIBSC.SMENR.LONG, regset->dme, SPIBSC_SMENR_DME_SHIFT, SPIBSC_SMENR_DME);
      if (regset->dme != SPIBSC_DUMMY_CYC_DISABLE) {
-         RegWwrite_32(&SPIBSC.SMDMCR.LONG, regset->dmdb, SPIBSC_SMDMCR_DMDB_SHIFT, SPIBSC_SMDMCR_DMDB);
          /* Dummy Cycle */
          RegWwrite_32(&SPIBSC.SMDMCR.LONG, regset->dmcyc, SPIBSC_SMDMCR_DMCYC_SHIFT, SPIBSC_SMDMCR_DMCYC);
      }

@@ -18,12 +18,12 @@
 * you agree to the additional terms and conditions found by accessing the
 * following link:
 * http://www.renesas.com/disclaimer
-* Copyright (C) 2012 - 2014 Renesas Electronics Corporation. All rights reserved.
+* Copyright (C) 2016 Renesas Electronics Corporation. All rights reserved.
 *******************************************************************************/
 /******************************************************************************
 * File Name    : dev_drv.h
-* $Rev: 809 $
-* $Date:: 2014-04-09 15:06:36 +0900#$
+* $Rev: 127 $
+* $Date:: 2016-09-20 11:34:44 +0900#$
 * Description  : Device driver header
 ******************************************************************************/
 #ifndef DEV_DRV_H
