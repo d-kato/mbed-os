@@ -167,9 +167,9 @@ void USBPhyHw::init(USBPhyEvents *events)
     (void)dummy_read;
 
 #if defined(TARGET_RZ_A2M_SBEV) || defined(TARGET_SEMB1402)
-    USBX0.PHYCLK_CTRL.BIT.UCKSEL = 0;       /* EXTAL */
+    USBX0.PHYCLK_CTRL.BIT.UCLKSEL = 0;      /* EXTAL */
 #else
-    USBX0.PHYCLK_CTRL.BIT.UCKSEL = 1;       /* USB_X1 */
+    USBX0.PHYCLK_CTRL.BIT.UCLKSEL = 1;      /* USB_X1 */
 #endif
 
     cpu_delay_1us(10);                      /* 10us wait */
