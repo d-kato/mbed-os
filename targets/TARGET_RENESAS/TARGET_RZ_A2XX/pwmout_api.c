@@ -134,9 +134,9 @@ void pwmout_period_us(pwmout_t* obj, int us) {
     uint32_t wk_cycle;
 
     if (RZ_A2_IsClockMode0() == false) {
-        pclk_base = (uint32_t)CM1_RENESAS_RZ_A2_P0_CLK / 1000000;
+        pclk_base = (uint32_t)CM1_RENESAS_RZ_A2_P1_CLK / 1000000;
     } else {
-        pclk_base = (uint32_t)CM0_RENESAS_RZ_A2_P0_CLK / 1000000;
+        pclk_base = (uint32_t)CM0_RENESAS_RZ_A2_P1_CLK / 1000000;
     }
 
     uint32_t us_max = 0xFFFFFFFF / pclk_base;
