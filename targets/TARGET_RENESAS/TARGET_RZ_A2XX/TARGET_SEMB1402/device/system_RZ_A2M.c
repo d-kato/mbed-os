@@ -41,6 +41,192 @@ extern void HyperRAM_Init(void);
  P0_3: MD_CLKS
  */
 
+#include "rza_io_regrw.h"
+#include "iobitmask.h"
+#include "rtc_iobitmask.h"
+#include "usb_iobitmask.h"
+
+#define STARTUP_CFG_USB_PHY_PLL_DELAY_COUNT (500)
+
+#define IOREG_NONMASK_ACCESS    (0xFFFFFFFFuL)
+#define IOREG_NONSHIFT_ACCESS   (0)
+
+#define R_PRV_RTC_COUNT (2)
+#define R_PRV_USB_COUNT (2)
+
+static void disable_rtc(uint32_t ch)
+{
+    uint8_t dummy8;
+    uint32_t mask;
+    uint8_t shift;
+    static volatile struct st_rtc * const rtc[R_PRV_RTC_COUNT] = {
+        &RTC0, &RTC1
+    };
+    static const uint8_t mstp_mask[R_PRV_RTC_COUNT] ={
+        CPG_STBCR5_MSTP53, CPG_STBCR5_MSTP52
+    };
+    static const uint8_t mstp_shift[R_PRV_RTC_COUNT] = {
+        CPG_STBCR5_MSTP53_SHIFT, CPG_STBCR5_MSTP52_SHIFT
+    };
+    static const uint16_t rtcxtalsel_mask[R_PRV_RTC_COUNT] = {
+        PMG_RTCXTALSEL_RTC0XT, PMG_RTCXTALSEL_RTC1XT
+    };
+    static const uint8_t rtcxtalsel_shift[R_PRV_RTC_COUNT] = {
+        PMG_RTCXTALSEL_RTC0XT_SHIFT, PMG_RTCXTALSEL_RTC1XT_SHIFT
+    };
+
+    /* channel check */
+    if (ch >= R_PRV_RTC_COUNT) {
+        return;
+    }
+
+    /* 1: select RTCXTAL for RTC (RCR4.RCKSEL = 0) */
+    RZA_IO_RegWrite_8(&rtc[ch]->RCR4.BYTE, 0, IOREG_NONSHIFT_ACCESS, IOREG_NONMASK_ACCESS);
+    RZA_IO_RegRead_8(&rtc[ch]->RCR4.BYTE, IOREG_NONSHIFT_ACCESS, IOREG_NONMASK_ACCESS);
+
+    /* 2: disable RTC clock (RCR3.RTCEN = 0) */
+    RZA_IO_RegWrite_8(&rtc[ch]->RCR3.BYTE, 0, RTC_RCR3_RTCEN_SHIFT, RTC_RCR3_RTCEN);
+
+    /* Wait for successfully disabled */
+    dummy8 = 1;
+    while (0 != dummy8) {
+        dummy8 = RZA_IO_RegRead_8(&rtc[ch]->RCR3.BYTE, RTC_RCR3_RTCEN_SHIFT, RTC_RCR3_RTCEN);
+    }
+
+    /* 3: disable RTC clock while standby mode */
+    mask  = rtcxtalsel_mask[ch];
+    shift = rtcxtalsel_shift[ch];
+    RZA_IO_RegWrite_16(&PMG.RTCXTALSEL.WORD, 0, shift, mask);
+    RZA_IO_RegRead_16(&PMG.RTCXTALSEL.WORD, IOREG_NONSHIFT_ACCESS, IOREG_NONMASK_ACCESS);
+
+    /* 4: Stop RTC module */
+    mask  = mstp_mask[ch];
+    shift = mstp_shift[ch];
+    RZA_IO_RegWrite_8(&CPG.STBCR5.BYTE, 1, shift, mask);
+    RZA_IO_RegRead_8(&CPG.STBCR5.BYTE, IOREG_NONSHIFT_ACCESS, IOREG_NONMASK_ACCESS);
+}
+
+static void disable_usb(uint32_t ch)
+{
+    uint8_t dummy8;
+    uint32_t mask;
+    uint8_t shift;
+
+    /* USB Host IO reg Top Address(ch0, ch1) */
+    static volatile struct st_usb00 * const usb00_host[R_PRV_USB_COUNT] = {
+        &USB00, &USB10
+    };
+
+    /* USB Function IO reg Top Address(ch0, ch1) */
+    static volatile struct st_usb01 * const usb01_func[R_PRV_USB_COUNT] = {
+        &USB01, &USB11
+    };
+
+    /* MSTP */
+    static const uint8_t mstp_mask[R_PRV_USB_COUNT] = {
+        CPG_STBCR6_MSTP61, CPG_STBCR6_MSTP60
+    };
+    static const uint8_t mstp_shift[R_PRV_USB_COUNT] = {
+        CPG_STBCR6_MSTP61_SHIFT, CPG_STBCR6_MSTP60_SHIFT
+    };
+
+    /* STBREQ */
+    static const uint8_t stbreq_mask[R_PRV_USB_COUNT] = {
+        (CPG_STBREQ3_STBRQ31 | CPG_STBREQ3_STBRQ30), (CPG_STBREQ3_STBRQ33 | CPG_STBREQ3_STBRQ32)
+    };
+    static const uint8_t stbreq_shift[R_PRV_USB_COUNT] = {
+        CPG_STBREQ3_STBRQ30_SHIFT, CPG_STBREQ3_STBRQ32_SHIFT
+    };
+
+    /* STBACK */
+    static const uint8_t stback_mask[R_PRV_USB_COUNT] = {
+        (CPG_STBACK3_STBAK31 | CPG_STBACK3_STBAK30), (CPG_STBACK3_STBAK33 | CPG_STBACK3_STBAK32)
+    };
+    static const uint8_t stback_shift[R_PRV_USB_COUNT] = {
+        CPG_STBACK3_STBAK30_SHIFT, CPG_STBACK3_STBAK32_SHIFT
+    };
+
+    /* channel check */
+    if (ch >= R_PRV_USB_COUNT) {
+        return;
+    }
+
+    /* 1: Start USB module */
+
+    /* MSTP = 0 */
+    mask  = mstp_mask[ch];
+    shift = mstp_shift[ch];
+    RZA_IO_RegWrite_8(&CPG.STBCR6.BYTE, 0, shift, mask);
+    RZA_IO_RegRead_8(&CPG.STBCR6.BYTE, IOREG_NONSHIFT_ACCESS, IOREG_NONMASK_ACCESS);
+
+    /* STBREQ = 0 */
+    mask  = stbreq_mask[ch];
+    shift = stbreq_shift[ch];
+    RZA_IO_RegWrite_8(&CPG.STBREQ3.BYTE, 0x0, shift, mask);
+    RZA_IO_RegRead_8(&CPG.STBREQ3.BYTE, IOREG_NONSHIFT_ACCESS, IOREG_NONMASK_ACCESS);
+
+    /* check STBACK = 0 */
+    mask  = stback_mask[ch];
+    shift = stback_shift[ch];
+    dummy8 = 0x3;
+    while (0x0 != dummy8) {
+        dummy8 = RZA_IO_RegRead_8(&CPG.STBACK3.BYTE, shift, mask);
+    }
+    (void)dummy8;
+
+    /* 2: Set the clock supplied to USBPHY to EXTAL clock (PHYCLK_CTRL.UCLKSEL = 0) */
+    RZA_IO_RegWrite_32(&usb00_host[ch]->PHYCLK_CTRL.LONG, 0, USB_PHYCLK_CTRL_UCLKSEL_SHIFT, USB_PHYCLK_CTRL_UCLKSEL);
+
+    /* 3: It can recover from deep standby by DP, DM change (PHYIF_CTRL.FIXPHY = 1) */
+    RZA_IO_RegWrite_32(&usb00_host[ch]->PHYIF_CTRL.LONG, 1, USB_PHYIF_CTRL_FIXPHY_SHIFT, USB_PHYIF_CTRL_FIXPHY);
+
+    /* 4: UTMI+PHY Normal Mode (LPSTS.SUSPM = 1) */
+    RZA_IO_RegWrite_16(&usb01_func[ch]->LPSTS.WORD, 1, USB_LPSTS_SUSPM_SHIFT, USB_LPSTS_SUSPM);
+
+    /* 5: UTMI + reset release (USBCTR.PLL_RST = 0) */
+    RZA_IO_RegWrite_32(&usb00_host[ch]->USBCTR.LONG, 0, USB_USBCTR_PLL_RST_SHIFT, USB_USBCTR_PLL_RST);
+
+    /* 6: wait 200us delay(Waiting for oscillation stabilization of USBPHY built-in PLL) */
+    for (volatile int i = 0; i < STARTUP_CFG_USB_PHY_PLL_DELAY_COUNT; i++) {
+        ;
+    }
+
+    /* 7: Pulldown resistance control is effective (LINECTRL1 = 0x000A0000) */
+    RZA_IO_RegWrite_32(
+            &usb00_host[ch]->LINECTRL1.LONG,
+            (USB_LINECTRL1_DPRPD_EN | USB_LINECTRL1_DMRPD_EN),
+            IOREG_NONSHIFT_ACCESS,
+            IOREG_NONMASK_ACCESS);
+
+    /* 8: USBPHY standby mode (USBCTR.DIRPD = 1) */
+    RZA_IO_RegWrite_32(&usb00_host[ch]->USBCTR.LONG, 1, USB_USBCTR_DIRPD_SHIFT, USB_USBCTR_DIRPD);
+
+    /* 9: Stop USB module */
+
+    /* STBREQ = 1 */
+    mask  = stbreq_mask[ch];
+    shift = stbreq_shift[ch];
+    RZA_IO_RegWrite_8(&CPG.STBREQ3.BYTE, 0x3, shift, mask);
+    RZA_IO_RegRead_8(&CPG.STBREQ3.BYTE, IOREG_NONSHIFT_ACCESS, IOREG_NONMASK_ACCESS);
+
+    /* check STBACK = 1 */
+    mask  = stback_mask[ch];
+    shift = stback_shift[ch];
+    dummy8 = 0x0;
+    while (0x3 != dummy8)
+    {
+        dummy8 = RZA_IO_RegRead_8(&CPG.STBACK3.BYTE, shift, mask);
+    }
+    (void)dummy8;
+
+    /* MSTP = 1 */
+    mask  = mstp_mask[ch];
+    shift = mstp_shift[ch];
+    RZA_IO_RegWrite_8(&CPG.STBCR6.BYTE, 1, shift, mask);
+    RZA_IO_RegRead_8(&CPG.STBCR6.BYTE, IOREG_NONSHIFT_ACCESS, IOREG_NONMASK_ACCESS);
+}
+
+
 /*----------------------------------------------------------------------------
   System Core Clock Variable
  *----------------------------------------------------------------------------*/
@@ -87,6 +273,21 @@ void SystemInit (void)
 
     RZ_A2_InitClock();
     RZ_A2_InitBus();
+
+    disable_rtc(0);
+    if (RTC_BCNT1.RCR2.BIT.START == 0) {
+        disable_rtc(1);
+    }
+    disable_usb(0);
+    disable_usb(1);
+
+    volatile uint16_t  dummy_buf_16b;
+
+    // Clear the IOKEEP bit in DSFR
+    dummy_buf_16b = PMG.DSFR.WORD;
+    PMG.DSFR.BIT.IOKEEP = 0;
+    dummy_buf_16b = PMG.DSFR.WORD;
+    (void)dummy_buf_16b;
 
 #if defined(USE_HYPERRAM)
     HyperRAM_Init();

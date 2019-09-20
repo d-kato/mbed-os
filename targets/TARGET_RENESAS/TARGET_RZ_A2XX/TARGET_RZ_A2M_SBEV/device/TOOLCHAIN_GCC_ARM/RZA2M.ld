@@ -23,10 +23,11 @@
 MEMORY
 {
   BOOT_LOADER (rx) : ORIGIN = BOOT_LOADER_ADDR, LENGTH = BOOT_LOADER_SIZE 
-  SFLASH (rx) : ORIGIN = SFLASH_ADDR, LENGTH = SFLASH_SIZE 
-  L_TTB (rw)  : ORIGIN = 0x80000000, LENGTH = 0x00004000 
-  RAM (rwx) : ORIGIN = 0x80004000, LENGTH = 0x002FC000
-  RAM_NC (rwx) : ORIGIN = 0x80300000, LENGTH = 0x00100000
+  SFLASH (rx)      : ORIGIN = SFLASH_ADDR,      LENGTH = SFLASH_SIZE 
+  L_TTB (rw)       : ORIGIN = 0x80000000,       LENGTH = 0x00004000 
+  RAM_NV (rwx)     : ORIGIN = 0x80004000,       LENGTH = 0x0001C000
+  RAM (rwx)        : ORIGIN = 0x80020000,       LENGTH = 0x002E0000
+  RAM_NC (rwx)     : ORIGIN = 0x80300000,       LENGTH = 0x00100000
 }
 
 /* Linker script to place sections and symbol values. Should be used together
@@ -163,6 +164,11 @@ SECTIONS
         . += 0x00004000;
         Image$$TTB$$ZI$$Limit = .;
     } > L_TTB
+
+    .nv_data (NOLOAD) :
+    {
+        *(NV_DATA)
+    } > RAM_NV
 
     __etext = Load$$SEC_RAM_CODE$$Base + SIZEOF(.ram_code);
 
