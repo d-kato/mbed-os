@@ -2,8 +2,12 @@
 
 /* Linker script to configure memory regions. */
 
+#define SERIAL_FLASH_ADDR   0x20000000   /* SerialFlash */
+
+#define BOOT_LOADER_ADDR_SELECT    SERIAL_FLASH_ADDR
+
 #if !defined(MBED_APP_START)
-  #define MBED_APP_START 0x20000000
+  #define MBED_APP_START BOOT_LOADER_ADDR_SELECT
 #endif
 
 #if !defined(MBED_APP_SIZE)
@@ -11,20 +15,20 @@
 #endif
 
 #define BOOT_LOADER_ADDR    (MBED_APP_START)
-#if (MBED_APP_START == 0x20000000)
+#if (MBED_APP_START == BOOT_LOADER_ADDR_SELECT)
   #define BOOT_LOADER_SIZE  (0x00004000)
 #else
   #define BOOT_LOADER_SIZE  (0x00000000)
 #endif
 
-#define SFLASH_ADDR         (MBED_APP_START + BOOT_LOADER_SIZE)
-#define SFLASH_SIZE         (MBED_APP_SIZE - BOOT_LOADER_SIZE)
+#define ROM_ADDR            (MBED_APP_START + BOOT_LOADER_SIZE)
+#define ROM_SIZE            (MBED_APP_SIZE - BOOT_LOADER_SIZE)
 
 MEMORY
 {
-  BOOT_LOADER (rx) : ORIGIN = BOOT_LOADER_ADDR, LENGTH = BOOT_LOADER_SIZE 
-  SFLASH (rx)      : ORIGIN = SFLASH_ADDR,      LENGTH = SFLASH_SIZE 
-  L_TTB (rw)       : ORIGIN = 0x80000000,       LENGTH = 0x00004000 
+  BOOT_LOADER (rx) : ORIGIN = BOOT_LOADER_ADDR, LENGTH = BOOT_LOADER_SIZE
+  ROM (rx)         : ORIGIN = ROM_ADDR,         LENGTH = ROM_SIZE
+  L_TTB (rw)       : ORIGIN = 0x80000000,       LENGTH = 0x00004000
   RAM_NV (rwx)     : ORIGIN = 0x80004000,       LENGTH = 0x0001C000
   RAM (rwx)        : ORIGIN = 0x80020000,       LENGTH = 0x002E0000
   RAM_NC (rwx)     : ORIGIN = 0x80300000,       LENGTH = 0x00100000
@@ -60,7 +64,7 @@ ENTRY(Reset_Handler)
 
 SECTIONS
 {
-#if (MBED_APP_START == 0x20000000)
+#if (MBED_APP_START == BOOT_LOADER_ADDR_SELECT)
     .boot :
     {
         KEEP(*(.boot_loader)) 
@@ -100,18 +104,20 @@ SECTIONS
         Image$$RO_DATA$$Limit = .;
 
         KEEP(*(.eh_frame*))
-    } > SFLASH
+
+        __etext = .;
+    } > ROM
 
     .ARM.extab : 
     {
         *(.ARM.extab* .gnu.linkonce.armextab.*)
-    } > SFLASH
+    } > ROM
 
     __exidx_start = .;
     .ARM.exidx :
     {
         *(.ARM.exidx* .gnu.linkonce.armexidx.*)
-    } > SFLASH
+    } > ROM
     __exidx_end = .;
 
 
@@ -119,41 +125,39 @@ SECTIONS
     {
         . = ALIGN(8);
         __copy_table_start__ = .;
-        LONG (__etext)
-        LONG (__data_start__)
-        LONG (__data_end__ - __data_start__)
-        LONG (__etext2)
-        LONG (__nc_data_start)
-        LONG (__nc_data_end - __nc_data_start)
+        LONG (LOADADDR(.data))
+        LONG (ADDR(.data))
+        LONG (SIZEOF(.data))
+        LONG (LOADADDR(.nc_data))
+        LONG (ADDR(.nc_data))
+        LONG (SIZEOF(.nc_data))
+        LONG (LOADADDR(.hyper_data))
+        LONG (ADDR(.hyper_data))
+        LONG (SIZEOF(.hyper_data))
         LONG (LOADADDR(.ram_code))
         LONG (ADDR(.ram_code))
         LONG (SIZEOF(.ram_code))
         __copy_table_end__ = .;
-    } > SFLASH
+    } > ROM
 
     .zero.table :
     {
         . = ALIGN(8);
         __zero_table_start__ = .;
-        LONG (__bss_start__)
-        LONG (__bss_end__ - __bss_start__)
-        LONG (__nc_bss_start)
-        LONG (__nc_bss_end - __nc_bss_start)
+        LONG (ADDR(.bss))
+        LONG (SIZEOF(.bss))
+        LONG (ADDR(.nc_bss))
+        LONG (SIZEOF(.nc_bss))
+        LONG (ADDR(.hyper_bss))
+        LONG (SIZEOF(.hyper_bss))
         __zero_table_end__ = .;
-    } > SFLASH
+    } > ROM
 
     .ram_code : ALIGN( 0x8 ) {
-        __ram_code_load  = .;
-        __ram_code_start = LOADADDR(.ram_code) + ( __ram_code_load - ADDR(.ram_code) );
-
         *(RAM_CODE)
-
         *(RAM_CONST)
-
         . = ALIGN( 0x8 );
-        __ram_code_end = LOADADDR(.ram_code) + ( . - ADDR(.ram_code) );
-    } > RAM AT > SFLASH
-
+    } > RAM AT > ROM
     Load$$SEC_RAM_CODE$$Base    = LOADADDR(.ram_code);
     Image$$SEC_RAM_CODE$$Base   = ADDR(.ram_code);
     Load$$SEC_RAM_CODE$$Length  = SIZEOF(.ram_code);
@@ -170,9 +174,7 @@ SECTIONS
         *(NV_DATA)
     } > RAM_NV
 
-    __etext = Load$$SEC_RAM_CODE$$Base + SIZEOF(.ram_code);
-
-    .data : AT (__etext)
+    .data :
     {
         Image$$RW_DATA$$Base = .;
         __data_start__ = .;
@@ -205,7 +207,7 @@ SECTIONS
         /* All data end */
         __data_end__ = .;
 
-    } > RAM
+    } > RAM AT > ROM
 
     .bss ALIGN(0x10):
     {
@@ -243,26 +245,21 @@ SECTIONS
     /* Check if data + heap + stack exceeds RAM limit */
     ASSERT(__StackLimit >= __HeapLimit, "region RAM overflowed with stack")
 
-    __etext2 = __etext + SIZEOF(.data);
-    .nc_data : AT (__etext2)
+    .nc_data :
     {
         Image$$RW_DATA_NC$$Base = .;
-        __nc_data_start = .;
         *(NC_DATA)
 
         . = ALIGN(8);
-        __nc_data_end = .;
         Image$$RW_DATA_NC$$Limit = .;
-    } > RAM_NC
+    } > RAM_NC AT > ROM
 
     .nc_bss (NOLOAD) :
     {
         Image$$ZI_DATA_NC$$Base = .;
-        __nc_bss_start = .;
         *(NC_BSS)
 
         . = ALIGN(8);
-        __nc_bss_end = .;
         Image$$ZI_DATA_NC$$Limit = .;
     } > RAM_NC
 }
