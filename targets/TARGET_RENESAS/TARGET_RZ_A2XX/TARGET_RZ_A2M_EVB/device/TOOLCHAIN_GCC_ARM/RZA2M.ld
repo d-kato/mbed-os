@@ -3,8 +3,13 @@
 /* Linker script to configure memory regions. */
 
 #define SERIAL_FLASH_ADDR   0x20000000   /* SerialFlash */
+#define HYPER_FLASH_ADDR    0x30000000   /* HyperFlash  */
 
+#if (0) /* HyperFlash */
+#define BOOT_LOADER_ADDR_SELECT    HYPER_FLASH_ADDR
+#else
 #define BOOT_LOADER_ADDR_SELECT    SERIAL_FLASH_ADDR
+#endif
 
 #if !defined(MBED_APP_START)
   #define MBED_APP_START BOOT_LOADER_ADDR_SELECT
