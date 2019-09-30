@@ -2,17 +2,8 @@
 
 /* Linker script to configure memory regions. */
 
-#define SERIAL_FLASH_ADDR   0x20000000   /* SerialFlash */
-#define HYPER_FLASH_ADDR    0x30000000   /* HyperFlash  */
-
-#if (0) /* HyperFlash */
-#define BOOT_LOADER_ADDR_SELECT    HYPER_FLASH_ADDR
-#else
-#define BOOT_LOADER_ADDR_SELECT    SERIAL_FLASH_ADDR
-#endif
-
 #if !defined(MBED_APP_START)
-  #define MBED_APP_START BOOT_LOADER_ADDR_SELECT
+  #define MBED_APP_START 0x20000000
 #endif
 
 #if !defined(MBED_APP_SIZE)
@@ -20,7 +11,7 @@
 #endif
 
 #define BOOT_LOADER_ADDR    (MBED_APP_START)
-#if (MBED_APP_START == BOOT_LOADER_ADDR_SELECT)
+#if (MBED_APP_START == 0x20000000)
   #define BOOT_LOADER_SIZE  (0x00004000)
 #else
   #define BOOT_LOADER_SIZE  (0x00000000)
@@ -70,7 +61,7 @@ ENTRY(Reset_Handler)
 
 SECTIONS
 {
-#if (MBED_APP_START == BOOT_LOADER_ADDR_SELECT)
+#if (MBED_APP_START == 0x20000000)
     .boot :
     {
         KEEP(*(.boot_loader)) 

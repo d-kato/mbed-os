@@ -21,8 +21,19 @@
 #include <string.h>
 #include "iodefine.h"
 #include "iobitmask.h"
-#include "spibsc.h"
 #include "mbed_drv_cfg.h"
+
+#if defined(__ICCARM__)
+#define RAM_CODE_SEC    __ramfunc
+#else
+#define RAM_CODE_SEC    __attribute__((section("RAM_CODE")))
+#endif
+
+static RAM_CODE_SEC void cache_control(void);
+
+
+#if defined(USE_SERIAL_FLASH)
+#include "spibsc.h"
 
 /* ---- serial flash command ---- */
 #if (FLASH_SIZE > 0x1000000)
@@ -104,12 +115,6 @@ static mmu_ttbl_desc_section_t desc_tbl[(FLASH_SIZE >> 20)];
 static st_spibsc_spimd_reg_t spimd_reg;
 static uint8_t write_tmp_buf[FLASH_PAGE_SIZE];
 
-#if defined(__ICCARM__)
-#define RAM_CODE_SEC    __ramfunc
-#else
-#define RAM_CODE_SEC    __attribute__((section("RAM_CODE")))
-#endif
-
 /* Global function for optimization */
 RAM_CODE_SEC int32_t _sector_erase(uint32_t addr);
 RAM_CODE_SEC int32_t _page_program(uint32_t addr, const uint8_t * buf, int32_t size);
@@ -126,51 +131,6 @@ static RAM_CODE_SEC uint32_t RegRead_32(volatile unsigned long * ioreg, uint32_t
 static RAM_CODE_SEC void RegWwrite_32(volatile unsigned long * ioreg, uint32_t write_value, uint32_t shift, uint32_t mask);
 static RAM_CODE_SEC void change_mmu_ttbl_spibsc(uint32_t type);
 static RAM_CODE_SEC void spibsc_stop(void);
-static RAM_CODE_SEC void cache_control(void);
-
-int32_t flash_init(flash_t *obj)
-{
-    return 0;
-}
-
-int32_t flash_free(flash_t *obj)
-{
-    return 0;
-}
-
-int32_t flash_erase_sector(flash_t *obj, uint32_t address)
-{
-    return _sector_erase(address - FLASH_BASE);
-}
-
-int32_t flash_program_page(flash_t *obj, uint32_t address, const uint8_t *data, uint32_t size)
-{
-    return _page_program(address - FLASH_BASE, data, size);
-}
-
-uint32_t flash_get_sector_size(const flash_t *obj, uint32_t address)
-{
-    if ((address >= (FLASH_BASE + FLASH_SIZE)) || (address < FLASH_BASE)) {
-        return MBED_FLASH_INVALID_SIZE;
-    }
-
-    return FLASH_SECTOR_SIZE;
-}
-
-uint32_t flash_get_page_size(const flash_t *obj)
-{
-    return 8;
-}
-
-uint32_t flash_get_start_address(const flash_t *obj)
-{
-    return FLASH_BASE;
-}
-
-uint32_t flash_get_size(const flash_t *obj)
-{
-    return FLASH_SIZE;
-}
 
 int32_t _sector_erase(uint32_t addr)
 {
@@ -720,6 +680,244 @@ static void spibsc_stop(void)
         ;
     }
 }
+#endif /* USE_SERIAL_FLASH */
+
+
+#if defined(USE_HYPERFLASH)
+RAM_CODE_SEC int32_t _hyperflash_sector_erase(uint32_t addr);
+RAM_CODE_SEC int32_t _hyperflash_page_program(uint32_t addr, const uint8_t * buf, int32_t size);
+
+static RAM_CODE_SEC void hyperflash_commandwrite(uint32_t caddr, uint16_t write_value);
+static RAM_CODE_SEC void hyperflash_datawrite(uint32_t offset, uint16_t write_value);
+static RAM_CODE_SEC uint16_t hyperflash_readstatus(void);
+static RAM_CODE_SEC void hyperflash_write_word(uint32_t waddr, uint16_t wdata);
+
+int32_t _hyperflash_sector_erase(uint32_t addr)
+{
+    int32_t ret = 0;
+    uint16_t read_sr;
+
+    core_util_critical_section_enter();
+
+    /** Word program sequence */
+    hyperflash_commandwrite(0x555, 0x00AA);  /** 1st bus cycle */
+    hyperflash_commandwrite(0x2AA, 0x0055);  /** 2nd bus cycle */
+    hyperflash_commandwrite(0x555, 0x0080);  /** 3rd bus cycle */
+    hyperflash_commandwrite(0x555, 0x00AA);  /** 4th bus cycle */
+    hyperflash_commandwrite(0x2AA, 0x0055);  /** 5th bus cycle */
+    hyperflash_datawrite(addr, 0x0030);      /** 6th bus cycle */
+
+    /** Wait for device ready asserted */
+    while (1) {
+        /** Read status regster */
+        read_sr = hyperflash_readstatus();
+        if ((read_sr & 0x80) != 0) {
+            break;
+        }
+    }
+
+    /** Evaluate erase status */
+    hyperflash_commandwrite(0x555, 0x00D0);  /** 1st bus cycle */
+
+    /** Wait for device ready asserted */
+    while (1) {
+        /** Read status regster */
+        read_sr = hyperflash_readstatus();
+        if ((read_sr & 0x80) != 0) {
+            break;
+        }
+    }
+
+    /** Sector erase error check */
+    if ((read_sr & 0x01) == 0) {
+        ret = -1; /** erase error occured */
+    }
+
+    cache_control();
+    core_util_critical_section_exit();
+
+    return ret;
+}
+
+int32_t _hyperflash_page_program(uint32_t addr, const uint8_t * buf, int32_t size)
+{
+    uint16_t send_data;
+    uint32_t send_addr = addr;
+    int32_t  idx = 0;
+
+    /* Size check */
+    if (size < 0) {
+        return -1;
+    }
+    if (size == 0) {
+        return 0;
+    }
+
+    core_util_critical_section_enter();
+
+    /* Odd address */
+    if ((send_addr & 0x1) != 0) {
+        send_addr -= 1;
+        send_data = (buf[idx] << 8) + (*(uint8_t *)send_addr);
+        idx += 1;
+        hyperflash_write_word(send_addr, send_data);
+        send_addr += 2;
+    }
+
+    /* Write loop */
+    while ((idx + 1) < size) {
+        send_data = (buf[idx + 1] << 8) + buf[idx];
+        idx += 2;
+        hyperflash_write_word(send_addr, send_data);
+        send_addr += 2;
+    }
+
+    /* Odd size */
+    if (idx < size) {
+        send_data = (0xFF << 8) + buf[idx];
+        hyperflash_write_word(send_addr, send_data);
+    }
+
+    cache_control();
+    core_util_critical_section_exit();
+
+    return 0;
+}
+
+static void hyperflash_commandwrite(uint32_t caddr, uint16_t write_value)
+{
+    *(volatile uint16_t *)(RZ_A2_HYPER_FLASH_IO + (caddr << 1)) = write_value;
+}
+
+static void hyperflash_datawrite(uint32_t offset, uint16_t write_value)
+{
+    *(volatile uint16_t *)(RZ_A2_HYPER_FLASH_IO + offset) = write_value;
+}
+
+static uint16_t hyperflash_readstatus(void)
+{
+    uint16_t read_sr;
+
+    hyperflash_commandwrite(0x555, 0x0070);                   /** 1st bus cycle */
+    read_sr = *(volatile uint16_t *)(RZ_A2_HYPER_FLASH_IO);   /** 2nd bus cycle */
+
+    return read_sr;
+}
+
+static void hyperflash_write_word(uint32_t waddr, uint16_t wdata)
+{
+    uint16_t read_sr;
+
+    /** Word program sequence */
+    hyperflash_commandwrite(0x555, 0x00AA); /** 1st bus cycle */
+    hyperflash_commandwrite(0x2AA, 0x0055); /** 2nd bus cycle */
+    hyperflash_commandwrite(0x555, 0x00A0); /** 3rd bus cycle */
+    hyperflash_datawrite(waddr, wdata);     /** 4th bus cycle */
+
+    /** Wait for device ready asserted */
+    while (1) {
+        /** Read status regster */
+        read_sr = hyperflash_readstatus();
+        if ((read_sr & 0x80) != 0) {
+            break;
+        }
+    }
+}
+#endif /* USE_HYPERFLASH */
+
+
+int32_t flash_init(flash_t *obj)
+{
+    return 0;
+}
+
+int32_t flash_free(flash_t *obj)
+{
+    return 0;
+}
+
+int32_t flash_erase_sector(flash_t *obj, uint32_t address)
+{
+#if defined(USE_HYPERFLASH)
+    if ((address >= HYPERFLASH_BASE) && (address < (HYPERFLASH_BASE + HYPERFLASH_SIZE))) {
+        return _hyperflash_sector_erase(address - HYPERFLASH_BASE);
+    }
+#endif /* USE_HYPERFLASH */
+#if defined(USE_SERIAL_FLASH)
+    if ((address >= FLASH_BASE) && (address < (FLASH_BASE + FLASH_SIZE))) {
+        return _sector_erase(address - FLASH_BASE);
+    }
+#endif /* USE_SERIAL_FLASH */
+    return -1;
+}
+
+int32_t flash_program_page(flash_t *obj, uint32_t address, const uint8_t *data, uint32_t size)
+{
+#if defined(USE_HYPERFLASH)
+    if ((address >= HYPERFLASH_BASE) && (address < (HYPERFLASH_BASE + HYPERFLASH_SIZE))) {
+        return _hyperflash_page_program(address - HYPERFLASH_BASE, data, size);
+    }
+#endif /* USE_HYPERFLASH */
+#if defined(USE_SERIAL_FLASH)
+    if ((address >= FLASH_BASE) && (address < (FLASH_BASE + FLASH_SIZE))) {
+        return _page_program(address - FLASH_BASE, data, size);
+    }
+#endif /* USE_SERIAL_FLASH */
+    return -1;
+}
+
+uint32_t flash_get_sector_size(const flash_t *obj, uint32_t address)
+{
+#if defined(USE_HYPERFLASH)
+    if ((address >= HYPERFLASH_BASE) && (address < (HYPERFLASH_BASE + HYPERFLASH_SIZE))) {
+        return HYPERFLASH_SECTOR_SIZE;
+    }
+#endif /* USE_HYPERFLASH */
+#if defined(USE_SERIAL_FLASH)
+    if ((address >= FLASH_BASE) && (address < (FLASH_BASE + FLASH_SIZE))) {
+        return FLASH_SECTOR_SIZE;
+    }
+#endif /* USE_SERIAL_FLASH */
+    return MBED_FLASH_INVALID_SIZE;
+}
+
+uint32_t flash_get_page_size(const flash_t *obj)
+{
+    return 8;
+}
+
+uint32_t flash_get_start_address(const flash_t *obj)
+{
+#if defined(USE_HYPERFLASH) && defined(USE_SERIAL_FLASH)
+    return FLASH_BASE;
+#elif defined(USE_SERIAL_FLASH)
+    return FLASH_BASE;
+#elif defined(USE_HYPERFLASH)
+    return HYPERFLASH_BASE;
+#else
+    return 0;
+#endif
+}
+
+uint32_t flash_get_size(const flash_t *obj)
+{
+#if defined(USE_HYPERFLASH) && defined(USE_SERIAL_FLASH)
+    return 0x10000000 + HYPERFLASH_SIZE;
+#elif defined(USE_SERIAL_FLASH)
+    return FLASH_SIZE;
+#elif defined(USE_HYPERFLASH)
+    return HYPERFLASH_SIZE;
+#else
+    return 0;
+#endif
+}
+
+uint8_t flash_get_erase_value(const flash_t *obj)
+{
+    (void)obj;
+
+    return 0xFF;
+}
 
 static void cache_control(void)
 {
@@ -748,13 +946,6 @@ static void cache_control(void)
     __set_ICIALLU(0);
     __DSB();     // ensure completion of the invalidation
     __ISB();     // ensure instruction fetch path sees new I cache state
-}
-
-uint8_t flash_get_erase_value(const flash_t *obj)
-{
-    (void)obj;
-
-    return 0xFF;
 }
 
 #endif

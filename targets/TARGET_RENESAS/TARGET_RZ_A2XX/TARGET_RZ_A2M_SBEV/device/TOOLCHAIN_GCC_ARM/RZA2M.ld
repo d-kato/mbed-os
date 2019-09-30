@@ -131,9 +131,6 @@ SECTIONS
         LONG (LOADADDR(.nc_data))
         LONG (ADDR(.nc_data))
         LONG (SIZEOF(.nc_data))
-        LONG (LOADADDR(.hyper_data))
-        LONG (ADDR(.hyper_data))
-        LONG (SIZEOF(.hyper_data))
         LONG (LOADADDR(.ram_code))
         LONG (ADDR(.ram_code))
         LONG (SIZEOF(.ram_code))
@@ -148,8 +145,6 @@ SECTIONS
         LONG (SIZEOF(.bss))
         LONG (ADDR(.nc_bss))
         LONG (SIZEOF(.nc_bss))
-        LONG (ADDR(.hyper_bss))
-        LONG (SIZEOF(.hyper_bss))
         __zero_table_end__ = .;
     } > ROM
 
