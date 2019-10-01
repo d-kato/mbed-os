@@ -36,6 +36,8 @@
 #define HYPERFLASH_BASE            (0x30000000UL) /**< Flash Base Address */
 #define HYPERFLASH_SIZE            (0x04000000UL) /**< Available Flash Memory */
 #define HYPERFLASH_SECTOR_SIZE     (256 * 1024)   /**< Flash Memory sector size (interleaving off) */
+#define FLASH_BASE                 HYPERFLASH_BASE /**< Flash Base Address */
+#define FLASH_SIZE                 HYPERFLASH_SIZE /**< Available Flash Memory */
 
 /* HyperRAM */
 #define USE_HYPERRAM
