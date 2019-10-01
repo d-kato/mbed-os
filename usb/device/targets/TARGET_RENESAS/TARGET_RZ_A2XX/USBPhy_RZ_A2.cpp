@@ -159,11 +159,16 @@ void USBPhyHw::init(USBPhyEvents *events)
     pin_function(P5_2, 3); /* VBUSIN1 */
 #endif
     CPG.STBCR6.BIT.MSTP61 = 0;
-#else
+    dummy_read = CPG.STBCR6.BYTE;
+    CPG.STBREQ3.BYTE &= ~0x03;
+    dummy_read = CPG.STBREQ3.BYTE;
+#else /*  (USB_FUNCTION_CH == 1) */
     pin_function(PC_0, 1); /* VBUSIN1 */
     CPG.STBCR6.BIT.MSTP60 = 0;
-#endif
     dummy_read = CPG.STBCR6.BYTE;
+    CPG.STBREQ3.BYTE &= ~0x0C;
+    dummy_read = CPG.STBREQ3.BYTE;
+#endif
     (void)dummy_read;
 
 #if defined(TARGET_RZ_A2M_SBEV) || defined(TARGET_SEMB1402)
@@ -172,10 +177,11 @@ void USBPhyHw::init(USBPhyEvents *events)
     USBX0.PHYCLK_CTRL.BIT.UCLKSEL = 1;      /* USB_X1 */
 #endif
 
-    cpu_delay_1us(10);                      /* 10us wait */
+    USBX0.PHYIF_CTRL.LONG = 0x00000000;
     USBX0.COMMCTRL.BIT.OTG_PERI = 1;        /* 0 : Host, 1 : Peri */
-    USBX0.PHYIF_CTRL.LONG = 0x00000001;     /* It can be recovered from the deep-stanby by signal change of D+,D-. */
-    USBX0.USBCTR.LONG &= ~0x00000002;       /* UTMI+PHY reset OFF */
+    USB_MX.LPSTS.WORD   |= USB_SUSPENDM;
+    USBX0.USBCTR.LONG = 0x00000000;
+    cpu_delay_1us(100);                     /* 100us wait */
 
     if (events != NULL) {
         sleep_manager_unlock_deep_sleep();
@@ -219,8 +225,6 @@ void USBPhyHw::connect()
 
     /* Setting USB relation register  */
     USB_MX.SYSCFG0.WORD |= USB_USBE;
-    USB_MX.LPSTS.WORD   |= USB_SUSPENDM;
-    cpu_delay_1us(30);                    /* 30us wait */
     USB_MX.SYSCFG1.WORD = (7 & 0x003f);   /* 7 : 9 access cycles  waits */
     USB_MX.CFIFOSEL.WORD  = USB_MBW_32;
     USB_MX.D0FIFOSEL.WORD = USB_MBW_32;
