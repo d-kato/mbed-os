@@ -476,7 +476,7 @@ int32_t R_ETHER_Read_ZC2 (uint32_t channel, void **pbuf)
     int32_t ret;
     int32_t complete_flag;
     int32_t ret2;
-    descriptor_t * p_rx_desc = papp_rx_desc[channel];
+    descriptor_t * p_rx_desc;
 
     /* Check argument */
 #if ((ETHER_CH0_EN == 0) && (ETHER_CH1_EN == 1)) || ((ETHER_CH0_EN == 1) && (ETHER_CH1_EN == 0))
@@ -486,6 +486,8 @@ int32_t R_ETHER_Read_ZC2 (uint32_t channel, void **pbuf)
         return ETHER_ERR_INVALID_CHAN;
     }
 #endif
+    p_rx_desc = papp_rx_desc[channel];
+
     if (NULL == p_rx_desc) {
         return ETHER_ERR_INVALID_CHAN;
     }
@@ -570,7 +572,7 @@ int32_t R_ETHER_Read_ZC2_BufRelease (uint32_t channel)
 {
     volatile struct st_edmac * pedmac_adr;
     uint32_t status;
-    descriptor_t * p_rx_desc = papp_rx_desc[channel];
+    descriptor_t * p_rx_desc;
 
     /* Check argument */
 #if ((ETHER_CH0_EN == 0) && (ETHER_CH1_EN == 1)) || ((ETHER_CH0_EN == 1) && (ETHER_CH1_EN == 0))
@@ -580,6 +582,8 @@ int32_t R_ETHER_Read_ZC2_BufRelease (uint32_t channel)
         return ETHER_ERR_INVALID_CHAN;
     }
 #endif
+    p_rx_desc = papp_rx_desc[channel];
+
     if (NULL == p_rx_desc) {
         return ETHER_ERR_INVALID_CHAN;
     }
@@ -650,7 +654,7 @@ int32_t R_ETHER_Read_ZC2_BufRelease (uint32_t channel)
 ether_return_t R_ETHER_Write_ZC2_GetBuf (uint32_t channel, void **pbuf, uint16_t *pbuf_size)
 {
     /* Check argument */
-    descriptor_t* p_tx_desc = papp_tx_desc[channel];
+    descriptor_t* p_tx_desc;
 
 #if ((ETHER_CH0_EN == 0) && (ETHER_CH1_EN == 1)) || ((ETHER_CH0_EN == 1) && (ETHER_CH1_EN == 0))
     channel = 0;
@@ -659,6 +663,7 @@ ether_return_t R_ETHER_Write_ZC2_GetBuf (uint32_t channel, void **pbuf, uint16_t
         return ETHER_ERR_INVALID_CHAN;
     }
 #endif
+    p_tx_desc = papp_tx_desc[channel];
     if (NULL == p_tx_desc) {
         return ETHER_ERR_INVALID_CHAN;
     }
@@ -715,7 +720,7 @@ ether_return_t R_ETHER_Write_ZC2_GetBuf (uint32_t channel, void **pbuf, uint16_t
 ether_return_t R_ETHER_Write_ZC2_SetBuf (uint32_t channel, const uint32_t len)
 {
     volatile struct st_edmac * pedmac_adr;
-    descriptor_t* p_tx_desc = papp_tx_desc[channel];
+    descriptor_t* p_tx_desc;
 
     /* Check argument */
 #if ((ETHER_CH0_EN == 0) && (ETHER_CH1_EN == 1)) || ((ETHER_CH0_EN == 1) && (ETHER_CH1_EN == 0))
@@ -725,6 +730,7 @@ ether_return_t R_ETHER_Write_ZC2_SetBuf (uint32_t channel, const uint32_t len)
         return ETHER_ERR_INVALID_CHAN;
     }
 #endif
+    p_tx_desc = papp_tx_desc[channel];
     if (NULL == p_tx_desc) {
         return ETHER_ERR_INVALID_CHAN;
     }
