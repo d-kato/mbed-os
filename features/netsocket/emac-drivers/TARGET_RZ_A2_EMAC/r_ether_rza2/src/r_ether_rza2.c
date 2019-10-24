@@ -178,15 +178,8 @@ static const pauseresolution_t pause_resolution[PAUSE_TABLE_ENTRIES] =
  * defined with section pragma directives to easily locate them
  * on the memory map.
  */
-#if defined(__ICCARM__)
-#pragma data_alignment=32
-static descriptor_t rx_descriptors[ETHER_CHANNEL_MAX][ETHER_CFG_EMAC_RX_DESCRIPTORS] @ ".mirrorram";
-#pragma data_alignment=32
-static descriptor_t tx_descriptors[ETHER_CHANNEL_MAX][ETHER_CFG_EMAC_TX_DESCRIPTORS] @ ".mirrorram";
-#else
 static descriptor_t rx_descriptors[ETHER_CHANNEL_MAX][ETHER_CFG_EMAC_RX_DESCRIPTORS] __attribute((section("NC_BSS"),aligned(32)));
 static descriptor_t tx_descriptors[ETHER_CHANNEL_MAX][ETHER_CFG_EMAC_TX_DESCRIPTORS] __attribute((section("NC_BSS"),aligned(32)));
-#endif
 
 /*
  * As for Ethernet buffer, the size of total buffer which are use for transmission and the reception is secured.
@@ -195,12 +188,7 @@ static descriptor_t tx_descriptors[ETHER_CHANNEL_MAX][ETHER_CFG_EMAC_TX_DESCRIPT
  * The ETHER_CFG_BUFSIZE and EMAC_NUM_BUFFERS are defined by macro in the file "r_ether_private.h".
  * It is sequentially used from the head of the buffer as a receive buffer or a transmission buffer.
  */
-#if defined(__ICCARM__)
-#pragma data_alignment=32
-static etherbuffer_t ether_buffers[ETHER_CHANNEL_MAX] @ ".mirrorram";
-#else
 static etherbuffer_t ether_buffers[ETHER_CHANNEL_MAX] __attribute((section("NC_BSS"),aligned(32)));
-#endif
 
 static uint8_t promiscuous_mode[ETHER_CHANNEL_MAX];
 
