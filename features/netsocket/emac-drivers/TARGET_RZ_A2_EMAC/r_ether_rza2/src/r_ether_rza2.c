@@ -295,7 +295,7 @@ ether_return_t R_ETHER_Open_ZC2 (uint32_t channel, const uint8_t mac_addr[], uin
     volatile struct st_edmac * pedmac_adr;
 
     /* Check argument */
-#if ((ETHER_CH0_EN == 0) && (ETHER_CH1_EN == 1)) || ((ETHER_CH0_EN == 1) && (ETHER_CH1_EN == 0))
+#if (ETHER_CHANNEL_MAX == 1)
     channel = 0;
 #else
     if (ETHER_CHANNEL_MAX <= channel) {
@@ -326,7 +326,7 @@ ether_return_t R_ETHER_Open_ZC2 (uint32_t channel, const uint8_t mac_addr[], uin
     mac_addr_buf[channel][4] = mac_addr[4];
     mac_addr_buf[channel][5] = mac_addr[5];
 
-#if ((ETHER_CH0_EN == 0) && (ETHER_CH1_EN == 1)) || ((ETHER_CH0_EN == 1) && (ETHER_CH1_EN == 0))
+#if (ETHER_CHANNEL_MAX == 1)
   #if (ETHER_CH0_EN == 1)
     InterruptHandlerRegister(EINT0_IRQn, &ether_eint0);
   #else
@@ -362,7 +362,7 @@ ether_return_t R_ETHER_Open_ZC2 (uint32_t channel, const uint8_t mac_addr[], uin
         pedmac_adr->EESIPR.BIT.ECIIP = 1;
 
         /* Set Ethernet interrupt level and enable */
-#if ((ETHER_CH0_EN == 0) && (ETHER_CH1_EN == 1)) || ((ETHER_CH0_EN == 1) && (ETHER_CH1_EN == 0))
+#if (ETHER_CHANNEL_MAX == 1)
     #if (ETHER_CH0_EN == 1)
         GIC_SetPriority(EINT0_IRQn, 0x80);
         GIC_EnableIRQ(EINT0_IRQn);
@@ -403,7 +403,7 @@ ether_return_t R_ETHER_Close_ZC2 (uint32_t channel)
     volatile struct st_edmac * pedmac_adr;
 
     /* Check argument */
-#if ((ETHER_CH0_EN == 0) && (ETHER_CH1_EN == 1)) || ((ETHER_CH0_EN == 1) && (ETHER_CH1_EN == 0))
+#if (ETHER_CHANNEL_MAX == 1)
     channel = 0;
 #else
     if (ETHER_CHANNEL_MAX <= channel) {
@@ -415,7 +415,7 @@ ether_return_t R_ETHER_Close_ZC2 (uint32_t channel)
     pedmac_adr = g_eth_control_ch[channel].pedmac;
 
     /* Disable Ethernet interrupt. */
-#if ((ETHER_CH0_EN == 0) && (ETHER_CH1_EN == 1)) || ((ETHER_CH0_EN == 1) && (ETHER_CH1_EN == 0))
+#if (ETHER_CHANNEL_MAX == 1)
   #if (ETHER_CH0_EN == 1)
     GIC_DisableIRQ(EINT0_IRQn);
   #else
@@ -479,7 +479,7 @@ int32_t R_ETHER_Read_ZC2 (uint32_t channel, void **pbuf)
     descriptor_t * p_rx_desc;
 
     /* Check argument */
-#if ((ETHER_CH0_EN == 0) && (ETHER_CH1_EN == 1)) || ((ETHER_CH0_EN == 1) && (ETHER_CH1_EN == 0))
+#if (ETHER_CHANNEL_MAX == 1)
     channel = 0;
 #else
     if (ETHER_CHANNEL_MAX <= channel) {
@@ -575,7 +575,7 @@ int32_t R_ETHER_Read_ZC2_BufRelease (uint32_t channel)
     descriptor_t * p_rx_desc;
 
     /* Check argument */
-#if ((ETHER_CH0_EN == 0) && (ETHER_CH1_EN == 1)) || ((ETHER_CH0_EN == 1) && (ETHER_CH1_EN == 0))
+#if (ETHER_CHANNEL_MAX == 1)
     channel = 0;
 #else
     if (ETHER_CHANNEL_MAX <= channel) {
@@ -656,7 +656,7 @@ ether_return_t R_ETHER_Write_ZC2_GetBuf (uint32_t channel, void **pbuf, uint16_t
     /* Check argument */
     descriptor_t* p_tx_desc;
 
-#if ((ETHER_CH0_EN == 0) && (ETHER_CH1_EN == 1)) || ((ETHER_CH0_EN == 1) && (ETHER_CH1_EN == 0))
+#if (ETHER_CHANNEL_MAX == 1)
     channel = 0;
 #else
     if (ETHER_CHANNEL_MAX <= channel) {
@@ -723,7 +723,7 @@ ether_return_t R_ETHER_Write_ZC2_SetBuf (uint32_t channel, const uint32_t len)
     descriptor_t* p_tx_desc;
 
     /* Check argument */
-#if ((ETHER_CH0_EN == 0) && (ETHER_CH1_EN == 1)) || ((ETHER_CH0_EN == 1) && (ETHER_CH1_EN == 0))
+#if (ETHER_CHANNEL_MAX == 1)
     channel = 0;
 #else
     if (ETHER_CHANNEL_MAX <= channel) {
@@ -780,7 +780,7 @@ ether_return_t R_ETHER_Write_ZC2_SetBuf (uint32_t channel, const uint32_t len)
 ether_return_t R_ETHER_CheckLink_ZC (uint32_t channel)
 {
     /* Check argument */
-#if ((ETHER_CH0_EN == 0) && (ETHER_CH1_EN == 1)) || ((ETHER_CH0_EN == 1) && (ETHER_CH1_EN == 0))
+#if (ETHER_CHANNEL_MAX == 1)
     channel = 0;
 #else
     if (ETHER_CHANNEL_MAX <= channel) {
@@ -812,7 +812,7 @@ void R_ETHER_LinkProcess (uint32_t channel)
     int32_t ret;
     ether_cb_arg_t cb_arg;
 
-#if ((ETHER_CH0_EN == 0) && (ETHER_CH1_EN == 1)) || ((ETHER_CH0_EN == 1) && (ETHER_CH1_EN == 0))
+#if (ETHER_CHANNEL_MAX == 1)
     channel = 0;
 #else
     if (ETHER_CHANNEL_MAX <= channel) {
@@ -1006,7 +1006,7 @@ ether_return_t R_ETHER_WakeOnLAN (uint32_t channel)
     ether_return_t ret;
 
     /* Check argument */
-#if ((ETHER_CH0_EN == 0) && (ETHER_CH1_EN == 1)) || ((ETHER_CH0_EN == 1) && (ETHER_CH1_EN == 0))
+#if (ETHER_CHANNEL_MAX == 1)
     channel = 0;
 #else
     if (ETHER_CHANNEL_MAX <= channel) {
@@ -1073,7 +1073,7 @@ int32_t R_ETHER_Read (uint32_t channel, void *pbuf)
     uint8_t * pread_buffer_address; /* Buffer location controlled by the Ethernet driver */
 
     /* Check argument */
-#if ((ETHER_CH0_EN == 0) && (ETHER_CH1_EN == 1)) || ((ETHER_CH0_EN == 1) && (ETHER_CH1_EN == 0))
+#if (ETHER_CHANNEL_MAX == 1)
     channel = 0;
 #else
     if (ETHER_CHANNEL_MAX <= channel) {
@@ -1145,7 +1145,7 @@ ether_return_t R_ETHER_Write (uint32_t channel, void *pbuf, const uint32_t len)
     uint8_t * pwrite_buffer_address;
     uint16_t write_buf_size;
 
-#if ((ETHER_CH0_EN == 0) && (ETHER_CH1_EN == 1)) || ((ETHER_CH0_EN == 1) && (ETHER_CH1_EN == 0))
+#if (ETHER_CHANNEL_MAX == 1)
     channel = 0;
 #else
     if (ETHER_CHANNEL_MAX <= channel) {
@@ -1204,7 +1204,7 @@ ether_return_t R_ETHER_CheckWrite (uint32_t channel)
     volatile struct st_edmac * pedmac_adr;
 
     /* Check argument */
-#if ((ETHER_CH0_EN == 0) && (ETHER_CH1_EN == 1)) || ((ETHER_CH0_EN == 1) && (ETHER_CH1_EN == 0))
+#if (ETHER_CHANNEL_MAX == 1)
     channel = 0;
 #else
     if (ETHER_CHANNEL_MAX <= channel) {
@@ -1310,7 +1310,7 @@ static void ether_reset_mac (uint32_t channel)
     volatile uint32_t i;
 
     /* Software reset */
-#if ((ETHER_CH0_EN == 0) && (ETHER_CH1_EN == 1)) || ((ETHER_CH0_EN == 1) && (ETHER_CH1_EN == 0))
+#if (ETHER_CHANNEL_MAX == 1)
   #if (ETHER_CH0_EN == 1)
     EDMAC0.EDMR.BIT.SWR = 1;
   #else
@@ -1755,7 +1755,7 @@ static ether_return_t ether_set_promiscuous_mode (ether_param_t const control)
     uint32_t channel;
 
     p_arg = control.p_ether_promiscuous;
-#if ((ETHER_CH0_EN == 0) && (ETHER_CH1_EN == 1)) || ((ETHER_CH0_EN == 1) && (ETHER_CH1_EN == 0))
+#if (ETHER_CHANNEL_MAX == 1)
     channel = 0;
 #else
     channel = p_arg->channel;
@@ -1810,7 +1810,7 @@ static ether_return_t ether_power_on (ether_param_t const control)
 {
     uint32_t channel;
 
-#if ((ETHER_CH0_EN == 0) && (ETHER_CH1_EN == 1)) || ((ETHER_CH0_EN == 1) && (ETHER_CH1_EN == 0))
+#if (ETHER_CHANNEL_MAX == 1)
     channel = 0;
     (void)&control;
 #else
@@ -1841,7 +1841,7 @@ static ether_return_t ether_power_off (ether_param_t const control)
 {
     uint32_t channel;
 
-#if ((ETHER_CH0_EN == 0) && (ETHER_CH1_EN == 1)) || ((ETHER_CH0_EN == 1) && (ETHER_CH1_EN == 0))
+#if (ETHER_CHANNEL_MAX == 1)
     channel = 0;
     (void)&control;
 #else
@@ -1872,7 +1872,7 @@ static ether_return_t power_on (uint32_t channel)
 {
     volatile uint8_t dummy;
 
-#if ((ETHER_CH0_EN == 0) && (ETHER_CH1_EN == 1)) || ((ETHER_CH0_EN == 1) && (ETHER_CH1_EN == 0))
+#if (ETHER_CHANNEL_MAX == 1)
     (void)channel;
   #if (ETHER_CH0_EN == 1)
     CPG.STBCR6.BIT.MSTP65 = 0;
@@ -1916,7 +1916,7 @@ static void power_off (uint32_t channel)
 {
     volatile uint8_t dummy;
 
-#if ((ETHER_CH0_EN == 0) && (ETHER_CH1_EN == 1)) || ((ETHER_CH0_EN == 1) && (ETHER_CH1_EN == 0))
+#if (ETHER_CHANNEL_MAX == 1)
     (void)channel;
   #if (ETHER_CH0_EN == 1)
     CPG.STBCR6.BIT.MSTP65 = 1;
@@ -1982,7 +1982,7 @@ static ether_return_t ether_set_multicastframe_filter (ether_param_t const contr
     flag = p_arg->flag;
 
     /* Check argument */
-#if ((ETHER_CH0_EN == 0) && (ETHER_CH1_EN == 1)) || ((ETHER_CH0_EN == 1) && (ETHER_CH1_EN == 0))
+#if (ETHER_CHANNEL_MAX == 1)
     channel = 0;
 #else
     if (ETHER_CHANNEL_MAX <= channel) {
@@ -2038,7 +2038,7 @@ static ether_return_t ether_set_broadcastframe_filter (ether_param_t const contr
     counter = p_arg->counter;
 
     /* Check argument */
-#if ((ETHER_CH0_EN == 0) && (ETHER_CH1_EN == 1)) || ((ETHER_CH0_EN == 1) && (ETHER_CH1_EN == 0))
+#if (ETHER_CHANNEL_MAX == 1)
     channel = 0;
 #else
     if (ETHER_CHANNEL_MAX <= channel) {
@@ -2110,7 +2110,7 @@ static void power_off_control (uint32_t channel)
  ***********************************************************************************************************************/
 static uint8_t check_mpde_bit (void)
 {
-#if ((ETHER_CH0_EN == 0) && (ETHER_CH1_EN == 1)) || ((ETHER_CH0_EN == 1) && (ETHER_CH1_EN == 0))
+#if (ETHER_CHANNEL_MAX == 1)
     /* The MPDE bit can be referred to only when ETHERC operates. */
     if ( (ETHER_MODULE_USE == etherc_edmac_power_cont[0])
   #if (ETHER_CH0_EN == 1)
@@ -2185,7 +2185,7 @@ static void ether_int_common (uint32_t channel)
     volatile struct st_edmac * pedmac_adr;
     ether_cb_arg_t cb_arg;
 
-#if ((ETHER_CH0_EN == 0) && (ETHER_CH1_EN == 1)) || ((ETHER_CH0_EN == 1) && (ETHER_CH1_EN == 0))
+#if (ETHER_CHANNEL_MAX == 1)
     channel = 0;
 #endif
 
