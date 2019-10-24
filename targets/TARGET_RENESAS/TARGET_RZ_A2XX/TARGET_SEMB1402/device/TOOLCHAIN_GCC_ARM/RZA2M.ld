@@ -2,12 +2,8 @@
 
 /* Linker script to configure memory regions. */
 
-#define SERIAL_FLASH_ADDR   0x20000000   /* SerialFlash */
-
-#define BOOT_LOADER_ADDR_SELECT    SERIAL_FLASH_ADDR
-
 #if !defined(MBED_APP_START)
-  #define MBED_APP_START BOOT_LOADER_ADDR_SELECT
+  #define MBED_APP_START 0x20000000
 #endif
 
 #if !defined(MBED_APP_SIZE)
@@ -15,7 +11,7 @@
 #endif
 
 #define BOOT_LOADER_ADDR    (MBED_APP_START)
-#if (MBED_APP_START == BOOT_LOADER_ADDR_SELECT)
+#if (MBED_APP_START == 0x20000000)
   #define BOOT_LOADER_SIZE  (0x00004000)
 #else
   #define BOOT_LOADER_SIZE  (0x00000000)
@@ -28,10 +24,9 @@ MEMORY
 {
   BOOT_LOADER (rx) : ORIGIN = BOOT_LOADER_ADDR, LENGTH = BOOT_LOADER_SIZE
   ROM (rx)         : ORIGIN = ROM_ADDR,         LENGTH = ROM_SIZE
-  L_TTB (rw)       : ORIGIN = 0x80000000,       LENGTH = 0x00004000
-  RAM_NV (rwx)     : ORIGIN = 0x80004000,       LENGTH = 0x0001C000
-  RAM (rwx)        : ORIGIN = 0x80020000,       LENGTH = 0x002E0000
-  RAM_NC (rwx)     : ORIGIN = 0x80300000,       LENGTH = 0x00100000
+  RAM_NV (rwx)     : ORIGIN = 0x80000000,       LENGTH = 0x00020000
+  L_TTB (rw)       : ORIGIN = 0x80020000,       LENGTH = 0x00005000
+  RAM (rwx)        : ORIGIN = 0x80025000,       LENGTH = 0x003DB000
   RAM_HYPER (rwx)  : ORIGIN = 0x40000000,       LENGTH = 0x00800000
 }
 
@@ -65,7 +60,7 @@ ENTRY(Reset_Handler)
 
 SECTIONS
 {
-#if (MBED_APP_START == BOOT_LOADER_ADDR_SELECT)
+#if (MBED_APP_START == 0x20000000)
     .boot :
     {
         KEEP(*(.boot_loader)) 
@@ -121,7 +116,6 @@ SECTIONS
     } > ROM
     __exidx_end = .;
 
-
     .copy.table :
     {
         . = ALIGN(8);
@@ -154,6 +148,21 @@ SECTIONS
         __zero_table_end__ = .;
     } > ROM
 
+    .nv_data (NOLOAD) :
+    {
+        *(NV_DATA)
+    } > RAM_NV
+
+    .ttb :
+    {
+        Image$$TTB$$ZI$$Base = .;
+        . += 0x00004000;
+        Image$$TTB$$ZI$$Limit = .;
+        Image$$TTB_L2$$ZI$$Base = .;
+        . += 0x00001000;
+        Image$$TTB_L2$$ZI$$Limit = .;
+    } > L_TTB
+
     .ram_code : ALIGN( 0x8 ) {
         *(RAM_CODE)
         *(RAM_CONST)
@@ -162,18 +171,6 @@ SECTIONS
     Load$$SEC_RAM_CODE$$Base    = LOADADDR(.ram_code);
     Image$$SEC_RAM_CODE$$Base   = ADDR(.ram_code);
     Load$$SEC_RAM_CODE$$Length  = SIZEOF(.ram_code);
-
-    .ttb :
-    {
-        Image$$TTB$$ZI$$Base = .;
-        . += 0x00004000;
-        Image$$TTB$$ZI$$Limit = .;
-    } > L_TTB
-
-    .nv_data (NOLOAD) :
-    {
-        *(NV_DATA)
-    } > RAM_NV
 
     .data :
     {
@@ -196,7 +193,6 @@ SECTIONS
         KEEP(*(.init_array))
         PROVIDE (__init_array_end = .);
 
-
         . = ALIGN(8);
         /* finit data */
         PROVIDE (__fini_array_start = .);
@@ -207,7 +203,6 @@ SECTIONS
         . = ALIGN(8);
         /* All data end */
         __data_end__ = .;
-
     } > RAM AT > ROM
 
     .bss ALIGN(0x10):
@@ -220,7 +215,26 @@ SECTIONS
         Image$$RW_IRAM1$$Limit = .;
     } > RAM
 
-    .heap :
+    .memory_adjust (NOLOAD):
+    {
+        . = ALIGN(0x1000);
+    } > RAM
+
+    .nc_data :
+    {
+        Image$$RW_DATA_NC$$Base = .;
+        *(NC_DATA)
+        Image$$RW_DATA_NC$$Limit = .;
+    } > RAM AT > ROM
+
+    .nc_bss (NOLOAD) :
+    {
+        Image$$ZI_DATA_NC$$Base = .;
+        *(NC_BSS)
+        Image$$ZI_DATA_NC$$Limit = .;
+    } > RAM
+
+    .heap ALIGN(0x1000):
     {
         __end__ = .;
         end = __end__;
@@ -245,24 +259,6 @@ SECTIONS
 
     /* Check if data + heap + stack exceeds RAM limit */
     ASSERT(__StackLimit >= __HeapLimit, "region RAM overflowed with stack")
-
-    .nc_data :
-    {
-        Image$$RW_DATA_NC$$Base = .;
-        *(NC_DATA)
-
-        . = ALIGN(8);
-        Image$$RW_DATA_NC$$Limit = .;
-    } > RAM_NC AT > ROM
-
-    .nc_bss (NOLOAD) :
-    {
-        Image$$ZI_DATA_NC$$Base = .;
-        *(NC_BSS)
-
-        . = ALIGN(8);
-        Image$$ZI_DATA_NC$$Limit = .;
-    } > RAM_NC
 
     /* HyperRAM */
     .hyper_data :

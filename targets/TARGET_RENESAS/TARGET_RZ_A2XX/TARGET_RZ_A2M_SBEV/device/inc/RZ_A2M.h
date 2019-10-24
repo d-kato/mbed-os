@@ -574,6 +574,9 @@ typedef enum IRQn
 #define RZ_A2_PL310_BASE                   (0x1F003000uL)                        /*!< (PL310     ) Base Address */
 //#define RZ_A2_PRIVATE_TIMER                (0x00000600UL + 0x82000000UL)         /*!< (PTIM      ) Base Address */
 
+/* Virtual address */
+#define RZ_A2_HYPER_FLASH_IO               (0xA0000000uL)                        /*!< Hyper Flash area (I/O area) */
+
 #define GIC_DISTRIBUTOR_BASE               RZ_A2_GIC_DISTRIBUTOR_BASE
 #define GIC_INTERFACE_BASE                 RZ_A2_GIC_INTERFACE_BASE
 #define L2C_310_BASE                       RZ_A2_PL310_BASE

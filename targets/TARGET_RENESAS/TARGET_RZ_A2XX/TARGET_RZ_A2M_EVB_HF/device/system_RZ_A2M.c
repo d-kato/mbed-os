@@ -274,21 +274,6 @@ void SystemInit (void)
     RZ_A2_InitClock();
     RZ_A2_InitBus();
 
-    disable_rtc(0);
-    if (RTC_BCNT1.RCR2.BIT.START == 0) {
-        disable_rtc(1);
-    }
-    disable_usb(0);
-    disable_usb(1);
-
-    volatile uint16_t  dummy_buf_16b;
-
-    // Clear the IOKEEP bit in DSFR
-    dummy_buf_16b = PMG.DSFR.WORD;
-    PMG.DSFR.BIT.IOKEEP = 0;
-    dummy_buf_16b = PMG.DSFR.WORD;
-    (void)dummy_buf_16b;
-
 #if defined(USE_HYPERRAM)
     HyperRAM_Init();
 #endif
@@ -327,6 +312,21 @@ void SystemInit (void)
 
     // IRQ Initialize
     IRQ_Initialize();
+
+    disable_rtc(0);
+    if (RTC_BCNT1.RCR2.BIT.START == 0) {
+        disable_rtc(1);
+    }
+    disable_usb(0);
+    disable_usb(1);
+
+    volatile uint16_t  dummy_buf_16b;
+
+    // Clear the IOKEEP bit in DSFR
+    dummy_buf_16b = PMG.DSFR.WORD;
+    PMG.DSFR.BIT.IOKEEP = 0;
+    dummy_buf_16b = PMG.DSFR.WORD;
+    (void)dummy_buf_16b;
 }
 
 void mbed_sdk_init(void) {
