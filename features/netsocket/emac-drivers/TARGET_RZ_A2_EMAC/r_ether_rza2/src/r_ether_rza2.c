@@ -37,6 +37,7 @@
 /***********************************************************************************************************************
  Macro definitions
  ***********************************************************************************************************************/
+#define ETHER_CFG_USE_VIRTUAL_ADDRESS   0  /* Since the virtual address is not used in the Mbed, the process is simplified. */
 
 /***********************************************************************************************************************
  Typedef definitions
@@ -218,8 +219,39 @@ const ether_control_t g_eth_control_ch[ETHER_CHANNEL_MAX] =
 };
 
 #if (ETHER_CFG_USE_LINKSTA == 0)
-    /* Previous link status */
-    static int16_t g_pre_link_stat[ETHER_CHANNEL_MAX];
+/* Previous link status */
+static int16_t g_pre_link_stat[ETHER_CHANNEL_MAX];
+#endif
+
+#if (ETHER_CFG_USE_VIRTUAL_ADDRESS)
+static uint32_t ether_mmu_uncached_diff;
+
+static uint32_t ether_mmu_VAtoPA(uint32_t vaddr)
+{
+    uint32_t *ttb = (uint32_t *)(__get_TTBR0() & 0xFFFFC000);
+    uint32_t *ttb_l2;
+    uint32_t paddr = vaddr;
+
+    ttb += (vaddr >> 20);
+    if ((*ttb & (0x40000 | 0x3)) == 2) {
+        paddr = (*ttb & 0xfff00000) | (vaddr & 0xfffff);
+    } else if ((*ttb & 0x3) == 1) {
+        ttb_l2 = (uint32_t *)(*ttb & 0xFFFFFC00);
+        if ((*ttb_l2 & 0x3) == 0) {
+            /* do nothing */
+        } else if ((*ttb_l2 & 0x3) == 1) { /* 64k page entry */
+            ttb_l2 += ((vaddr & 0x000ff000) >> 12);
+            paddr = (*ttb_l2 & 0xffff0000) | (vaddr & 0xffff);
+        } else {                           /* 4k page entry */
+            ttb_l2 += ((vaddr & 0x000ff000) >> 12);
+            paddr = (*ttb_l2 & 0xfffff000) | (vaddr & 0xfff);
+        }
+    } else {
+        /* do nothing */
+    }
+
+    return paddr;
+}
 #endif
 
 /*
@@ -262,6 +294,15 @@ void R_ETHER_Initial (void)
         mc_filter_flag[i] = ETHER_MC_FILTER_OFF;
         bc_filter_count[i] = 0;
     }
+#if (ETHER_CFG_USE_VIRTUAL_ADDRESS)
+    {
+        uint32_t vaddress = (uint32_t)&rx_descriptors;
+        uint32_t paddress;
+
+        paddress = ether_mmu_VAtoPA(vaddress);
+        ether_mmu_uncached_diff = vaddress - paddress;
+    }
+#endif
 
 } /* End of function R_ETHER_Initial() */
 
@@ -537,7 +578,11 @@ int32_t R_ETHER_Read_ZC2 (uint32_t channel, void **pbuf)
                      * Pass the pointer to received data to application.  This is
                      * zero-copy operation.
                      */
+#if (ETHER_CFG_USE_VIRTUAL_ADDRESS)
+                    (*pbuf) = (void *)(((uint32_t) p_rx_desc->buf_p) + ether_mmu_uncached_diff);
+#else
                     (*pbuf) = (void *) p_rx_desc->buf_p;
+#endif
 
                     /* Get bytes received */
                     num_recvd = p_rx_desc->size;
@@ -691,7 +736,11 @@ ether_return_t R_ETHER_Write_ZC2_GetBuf (uint32_t channel, void **pbuf, uint16_t
     }
 
     /* Give application another buffer to work with */
-    (*pbuf) = p_tx_desc->buf_p;
+#if (ETHER_CFG_USE_VIRTUAL_ADDRESS)
+    (*pbuf) = (void*)((p_tx_desc->buf_p) + ether_mmu_uncached_diff);
+#else
+    (*pbuf) = (void*) p_tx_desc->buf_p;
+#endif
     (*pbuf_size) = ETHER_CFG_BUFSIZE;
 
     return ETHER_SUCCESS;
@@ -1349,7 +1398,11 @@ static void ether_init_descriptors (uint32_t channel)
     /* Initialize the receive descriptors */
     for (i = 0; i < ETHER_CFG_EMAC_RX_DESCRIPTORS; i++) {
         pdescriptor = (descriptor_t *) &rx_descriptors[channel][i];
+#if (ETHER_CFG_USE_VIRTUAL_ADDRESS)
+        pdescriptor->buf_p = (uint8_t *) ether_mmu_VAtoPA((uint32_t)&(ether_buffers[channel].buffer[i][0]));
+#else
         pdescriptor->buf_p = (uint8_t *) &(ether_buffers[channel].buffer[i][0]);
+#endif
         pdescriptor->bufsize = ETHER_CFG_BUFSIZE;
         pdescriptor->size = 0;
         pdescriptor->status = RACT;
@@ -1366,7 +1419,11 @@ static void ether_init_descriptors (uint32_t channel)
     /* Initialize the transmit descriptors */
     for (i = 0; i < ETHER_CFG_EMAC_TX_DESCRIPTORS; i++) {
         pdescriptor = (descriptor_t *) &tx_descriptors[channel][i];
+#if (ETHER_CFG_USE_VIRTUAL_ADDRESS)
+        pdescriptor->buf_p = (uint8_t *) ether_mmu_VAtoPA((uint32_t)&(ether_buffers[channel].buffer[(ETHER_CFG_EMAC_RX_DESCRIPTORS + i)][0]));
+#else
         pdescriptor->buf_p = (uint8_t *) &(ether_buffers[channel].buffer[(ETHER_CFG_EMAC_RX_DESCRIPTORS + i)][0]);
+#endif
         pdescriptor->bufsize = 1; /* Set a value equal to or greater than 1. (reference to UMH)
          When transmitting data, the value of size is set to the function argument
          R_ETHER_Write_ZC2_SetBuf. */
@@ -1444,11 +1501,19 @@ static void ether_config_ethernet (uint32_t channel, const uint8_t mode)
 
     /* Initialize Rx descriptor list address */
     /* Casting the pointer to a uint32_t type is valid because the Renesas Compiler uses 4 bytes per pointer. */
+#if (ETHER_CFG_USE_VIRTUAL_ADDRESS)
+    pedmac_adr->RDLAR.LONG = ether_mmu_VAtoPA((uint32_t)papp_rx_desc[channel]);
+#else
     pedmac_adr->RDLAR.LONG = (uint32_t)papp_rx_desc[channel];
+#endif
 
     /* Initialize Tx descriptor list address */
     /* Casting the pointer to a uint32_t type is valid because the Renesas Compiler uses 4 bytes per pointer. */
+#if (ETHER_CFG_USE_VIRTUAL_ADDRESS)
+    pedmac_adr->TDLAR.LONG = ether_mmu_VAtoPA((uint32_t)papp_tx_desc[channel]);
+#else
     pedmac_adr->TDLAR.LONG = (uint32_t)papp_tx_desc[channel];
+#endif
 
     if (ETHER_MC_FILTER_ON == mc_filter_flag[channel]) {
         /* Reflect the EESR.RMAF bit status in the RD0.RFS bit in the receive descriptor */
