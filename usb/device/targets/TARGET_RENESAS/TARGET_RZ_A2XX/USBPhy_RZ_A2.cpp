@@ -163,7 +163,11 @@ void USBPhyHw::init(USBPhyEvents *events)
     CPG.STBREQ3.BYTE &= ~0x03;
     dummy_read = CPG.STBREQ3.BYTE;
 #else /*  (USB_FUNCTION_CH == 1) */
+#if defined(TARGET_GR_MANGO)
+    pin_function(P2_2, 5); /* VBUSIN1 */
+#else
     pin_function(PC_0, 1); /* VBUSIN1 */
+#endif
     CPG.STBCR6.BIT.MSTP60 = 0;
     dummy_read = CPG.STBCR6.BYTE;
     CPG.STBREQ3.BYTE &= ~0x0C;
@@ -171,7 +175,7 @@ void USBPhyHw::init(USBPhyEvents *events)
 #endif
     (void)dummy_read;
 
-#if defined(TARGET_RZ_A2M_SBEV) || defined(TARGET_SEMB1402)
+#if defined(TARGET_GR_MANGO) || defined(TARGET_RZ_A2M_SBEV) || defined(TARGET_SEMB1402)
     USBX0.PHYCLK_CTRL.BIT.UCLKSEL = 0;      /* EXTAL */
 #else
     USBX0.PHYCLK_CTRL.BIT.UCLKSEL = 1;      /* USB_X1 */
