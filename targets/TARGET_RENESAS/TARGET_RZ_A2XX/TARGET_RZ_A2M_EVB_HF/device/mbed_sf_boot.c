@@ -42,7 +42,7 @@ const char boot_loader[]  __attribute__((used)) =
 #elif (defined(__ARMCC_VERSION) && (__ARMCC_VERSION >= 6010050))
 const char boot_loader[]  __attribute__ ((section("BOOT_LOADER"), used)) =
 #elif defined (__ICCARM__)
-__root const char boot_loader[] @ BOOT_LOADE0x30000000R_ADDR_SELECT =
+__root const char boot_loader[] @ 0x30000000 =
 #else
 const char boot_loader[]  __attribute__ ((section(".boot_loader"), used)) =
 #endif
