@@ -32,6 +32,7 @@
 #include "mbed_drv_cfg.h"
 
 extern void HyperRAM_Init(void);
+extern void OctaRAM_Init(void);
 
 /*
  Port 0 (P0) MD pin assignment
@@ -276,6 +277,9 @@ void SystemInit (void)
 
 #if defined(USE_HYPERRAM)
     HyperRAM_Init();
+#endif
+#if defined(USE_OCTARAM)
+    OctaRAM_Init();
 #endif
 
     // Invalidate entire Unified TLB

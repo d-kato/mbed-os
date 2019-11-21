@@ -3,15 +3,15 @@
 /* IcfEditorFile="$TOOLKIT_DIR$\config\ide\IcfEditor\a_v1_0.xml" */
 /*-Specials-*/
 if (!isdefinedsymbol(MBED_APP_START)) {
-    define symbol MBED_APP_START = 0x30000000;
+    define symbol MBED_APP_START = 0x50000000;
 }
-if (MBED_APP_START == 0x30000000) {
+if (MBED_APP_START == 0x50000000) {
     define symbol __ICFEDIT_intvec_start__ = MBED_APP_START + 0x4000;
 } else {
     define symbol __ICFEDIT_intvec_start__ = MBED_APP_START;
 }
 if (!isdefinedsymbol(MBED_APP_SIZE)) {
-    define symbol MBED_APP_SIZE = 0x4000000;
+    define symbol MBED_APP_SIZE = 0x1000000;
 }
 /*-Memory Regions-*/
 define symbol __ICFEDIT_region_ROM_start__   = MBED_APP_START;
@@ -25,8 +25,6 @@ define symbol __ICFEDIT_region_TTB_L2_start__   = 0x80024000;
 define symbol __ICFEDIT_region_TTB_L2_end__     = 0x80024FFF;
 define symbol __ICFEDIT_region_RAM_start__      = 0x80025000;
 define symbol __ICFEDIT_region_RAM_end__        = 0x803DAFFF;
-define symbol __ICFEDIT_region_HyperRAM_start__ = 0x40000000;
-define symbol __ICFEDIT_region_HyperRAM_end__   = 0x407FFFFF;
 
 /*-Sizes-*/
 define symbol __ICFEDIT_size_cstack__   = 0x00004000;
@@ -74,4 +72,3 @@ place in TTB_L2_region   { section TTB_L2 };
 place in RAM_region      { readwrite,
                            block NC_RAM,
                            block C_RAM };
-place in HyperRAM_region { section HYPER_DATA, section HYPER_BSS };

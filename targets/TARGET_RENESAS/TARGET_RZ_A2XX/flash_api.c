@@ -826,6 +826,24 @@ static void hyperflash_write_word(uint32_t waddr, uint16_t wdata)
 #endif /* USE_HYPERFLASH */
 
 
+#if defined(USE_OCTAFLASH)
+RAM_CODE_SEC int32_t _octaflash_sector_erase(uint32_t addr);
+RAM_CODE_SEC int32_t _octaflash_page_program(uint32_t addr, const uint8_t * buf, int32_t size);
+
+int32_t _octaflash_sector_erase(uint32_t addr)
+{
+    // TO DO : Add processing here
+    return -1;
+}
+
+int32_t _octaflash_page_program(uint32_t addr, const uint8_t * buf, int32_t size)
+{
+    // TO DO : Add processing here
+    return -1;
+}
+#endif /* USE_OCTAFLASH */
+
+
 int32_t flash_init(flash_t *obj)
 {
     return 0;
@@ -838,6 +856,11 @@ int32_t flash_free(flash_t *obj)
 
 int32_t flash_erase_sector(flash_t *obj, uint32_t address)
 {
+#if defined(USE_OCTAFLASH)
+    if ((address >= OCTAFLASH_BASE) && (address < (OCTAFLASH_BASE + OCTAFLASH_SIZE))) {
+        return _octaflash_sector_erase(address - OCTAFLASH_BASE);
+    }
+#endif /* USE_OCTAFLASH */
 #if defined(USE_HYPERFLASH)
     if ((address >= HYPERFLASH_BASE) && (address < (HYPERFLASH_BASE + HYPERFLASH_SIZE))) {
         return _hyperflash_sector_erase(address - HYPERFLASH_BASE);
@@ -853,6 +876,11 @@ int32_t flash_erase_sector(flash_t *obj, uint32_t address)
 
 int32_t flash_program_page(flash_t *obj, uint32_t address, const uint8_t *data, uint32_t size)
 {
+#if defined(USE_OCTAFLASH)
+    if ((address >= OCTAFLASH_BASE) && (address < (OCTAFLASH_BASE + OCTAFLASH_SIZE))) {
+        return _octaflash_page_program(address - OCTAFLASH_BASE, data, size);
+    }
+#endif /* USE_OCTAFLASH */
 #if defined(USE_HYPERFLASH)
     if ((address >= HYPERFLASH_BASE) && (address < (HYPERFLASH_BASE + HYPERFLASH_SIZE))) {
         return _hyperflash_page_program(address - HYPERFLASH_BASE, data, size);
@@ -868,6 +896,11 @@ int32_t flash_program_page(flash_t *obj, uint32_t address, const uint8_t *data, 
 
 uint32_t flash_get_sector_size(const flash_t *obj, uint32_t address)
 {
+#if defined(USE_OCTAFLASH)
+    if ((address >= OCTAFLASH_BASE) && (address < (OCTAFLASH_BASE + OCTAFLASH_SIZE))) {
+        return OCTAFLASH_SECTOR_SIZE;
+    }
+#endif /* USE_OCTAFLASH */
 #if defined(USE_HYPERFLASH)
     if ((address >= HYPERFLASH_BASE) && (address < (HYPERFLASH_BASE + HYPERFLASH_SIZE))) {
         return HYPERFLASH_SECTOR_SIZE;
@@ -894,6 +927,8 @@ uint32_t flash_get_start_address(const flash_t *obj)
     return FLASH_BASE;
 #elif defined(USE_HYPERFLASH)
     return HYPERFLASH_BASE;
+#elif defined(USE_OCTAFLASH)
+    return OCTAFLASH_BASE;
 #else
     return 0;
 #endif
@@ -907,6 +942,8 @@ uint32_t flash_get_size(const flash_t *obj)
     return FLASH_SIZE;
 #elif defined(USE_HYPERFLASH)
     return HYPERFLASH_SIZE;
+#elif defined(USE_OCTAFLASH)
+    return OCTAFLASH_SIZE;
 #else
     return 0;
 #endif

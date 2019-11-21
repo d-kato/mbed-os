@@ -31,15 +31,18 @@
 #define USE_EXTAL_CLK
 #define RENESAS_RZ_A2_P0_CLK   CM0_RENESAS_RZ_A2_P0_CLK
 
-/* flash (MX25L6433FM2I) */
-#define USE_SERIAL_FLASH
-#define FLASH_BASE                 (0x20000000UL) /**< Flash Base Address */
-#define FLASH_SIZE                 (0x04000000UL) /**< Available Flash Memory */
-#define FLASH_PAGE_SIZE            256            /**< Flash Memory page size (interleaving off) */
-                                                  /**< Maximum size per one writing is 256 byte and minimum size per one writing is 1 byte */
-#define FLASH_SECTOR_SIZE          4096           /**< Flash Memory sector size (interleaving off) */
+/* flash (MX25UW12845GXDI00) */
+#define USE_OCTAFLASH
+#define OCTAFLASH_BASE             (0x50000000UL) /**< Flash Base Address */
+#define OCTAFLASH_SIZE             (0x01000000UL) /**< Available Flash Memory */
+#define OCTAFLASH_SECTOR_SIZE      (256 * 1024)   /**< Flash Memory sector size (interleaving off) */
+#define FLASH_BASE                 OCTAFLASH_BASE /**< Flash Base Address */
+#define FLASH_SIZE                 OCTAFLASH_SIZE /**< Available Flash Memory */
 
 /* HyperRAM */
 //#define USE_HYPERRAM
+
+/* OctaRAM */
+#define USE_OCTARAM
 
 #endif
