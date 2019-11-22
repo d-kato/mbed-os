@@ -35,7 +35,7 @@
 #define USE_OCTAFLASH
 #define OCTAFLASH_BASE             (0x50000000UL) /**< Flash Base Address */
 #define OCTAFLASH_SIZE             (0x01000000UL) /**< Available Flash Memory */
-#define OCTAFLASH_SECTOR_SIZE      (256 * 1024)   /**< Flash Memory sector size (interleaving off) */
+#define OCTAFLASH_SECTOR_SIZE      (4 * 1024)     /**< Flash Memory sector size (interleaving off) */
 #define FLASH_BASE                 OCTAFLASH_BASE /**< Flash Base Address */
 #define FLASH_SIZE                 OCTAFLASH_SIZE /**< Available Flash Memory */
 
