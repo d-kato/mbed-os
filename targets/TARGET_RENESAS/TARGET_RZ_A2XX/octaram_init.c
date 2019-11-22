@@ -30,31 +30,7 @@ Includes   <System Includes> , "Project Includes"
 ******************************************************************************/
 #include "r_typedefs.h"
 #include "iodefine.h"
-
-/******************************************************************************
-Typedef definitions
-******************************************************************************/
-
-
-/******************************************************************************
-Macro definitions
-******************************************************************************/
-
-
-/******************************************************************************
-Imported global variables and functions (from other files)
-******************************************************************************/
-
-
-/******************************************************************************
-Exported global variables and functions (to be accessed by other files)
-******************************************************************************/
-
-
-/******************************************************************************
-Private global variables and functions
-******************************************************************************/
-
+#include "mbed_drv_cfg.h"
 
 /******************************************************************************
 * Function Name: OctaRAM_Init
@@ -64,27 +40,27 @@ Private global variables and functions
 ******************************************************************************/
 void OctaRAM_Init(void)
 {
+    CPG.SCLKSEL.BIT.OCTCR = 2;           // Octa clock G
 
-    CPG.SCLKSEL.BIT.OCTCR = 2;
+    OCTA.DSR1.BIT.DV1TYP = 1;            // TYPE=RAM
+    OCTA.DSR1.BIT.DV1SZ  = OCTARAM_SIZE; // RAM size
 
-    OCTA.DSR1.LONG = 0x40800000;     // TYPE=RAM, RAM size=8MByte
+    OCTA.CDSR.BIT.DV1TTYP = 2;           // Device1 =DOPI mode
 
-    OCTA.CDSR.BIT.DV1TTYP = 2;       // device1=DOPI mode
+    OCTA.MDLR.BIT.DV1WDL = 8;            // Device1 Write DUMMY = 8
+    OCTA.MDLR.BIT.DV1RDL = 8;            // Device1 Read DUMMY = 8
 
-    OCTA.MDLR.BIT.DV1WDL = 8;        // Device1 Write DUMMY =8
-    OCTA.MDLR.BIT.DV1RDL = 8;        // Device1 Read DUMMY =8
+    OCTA.MDTR.BIT.DQSERAM = 6;           // OM_DQS enable counter
 
-    OCTA.MDTR.BIT.DQSERAM = 6;
+    OCTA.DRCSTR.BIT.DVRDHI1  = 5;        // Device1 select signal High timing setting = 6.5 clock cycles
+    OCTA.DRCSTR.BIT.DVRDCMD1 = 2;        // Device1 Command execution interval = 7 clock cycles
 
-    OCTA.DRCSTR.BIT.DVRDHI1  = 5;
-    OCTA.DRCSTR.BIT.DVRDCMD1 = 2;
+    OCTA.MRWCR1.BIT.D1MWCMD1 = 0x20;     // write command
+    OCTA.MRWCR1.BIT.D1MRCMD1 = 0xA0;     // read command
 
-    OCTA.MRWCR1.BIT.D1MWCMD1 = 0x20; // write command
-    OCTA.MRWCR1.BIT.D1MRCMD1 = 0xA0; // read command
-
-    OCTA.MRWCSR.BIT.MWO1  = 1;
-    OCTA.MRWCSR.BIT.MWCL1 = 2;
-    OCTA.MRWCSR.BIT.MWAL1 = 4;
+    OCTA.MRWCSR.BIT.MWO1  = 1;           // Device1 write order setting = Write order is byte1, byte0, byte3, byte2
+    OCTA.MRWCSR.BIT.MWCL1 = 2;           // Device1 write command length setting = 2
+    OCTA.MRWCSR.BIT.MWAL1 = 4;           // Device1 write address length setting = 4
 }
 
 /* End of File */

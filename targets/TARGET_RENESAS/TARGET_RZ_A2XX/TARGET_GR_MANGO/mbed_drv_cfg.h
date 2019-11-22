@@ -44,5 +44,6 @@
 
 /* OctaRAM */
 #define USE_OCTARAM
+#define OCTARAM_SIZE               (0x00800000UL) /**< Available Memory */
 
 #endif
