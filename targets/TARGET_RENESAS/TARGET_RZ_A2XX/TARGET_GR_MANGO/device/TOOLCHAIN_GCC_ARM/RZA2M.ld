@@ -31,6 +31,7 @@ MEMORY
   RAM_NV (rwx)     : ORIGIN = 0x80000000,       LENGTH = 0x00020000
   L_TTB (rw)       : ORIGIN = 0x80020000,       LENGTH = 0x00005000
   RAM (rwx)        : ORIGIN = 0x80025000,       LENGTH = 0x003DB000
+  RAM_OCTA (rwx)   : ORIGIN = 0x60000000,       LENGTH = 0x00800000
 }
 
 /* Linker script to place sections and symbol values. Should be used together
@@ -130,6 +131,9 @@ SECTIONS
         LONG (LOADADDR(.nc_data))
         LONG (ADDR(.nc_data))
         LONG (SIZEOF(.nc_data))
+        LONG (LOADADDR(.octa_data))
+        LONG (ADDR(.octa_data))
+        LONG (SIZEOF(.octa_data))
         LONG (LOADADDR(.ram_code))
         LONG (ADDR(.ram_code))
         LONG (SIZEOF(.ram_code))
@@ -144,6 +148,8 @@ SECTIONS
         LONG (SIZEOF(.bss))
         LONG (ADDR(.nc_bss))
         LONG (SIZEOF(.nc_bss))
+        LONG (ADDR(.octa_bss))
+        LONG (SIZEOF(.octa_bss))
         __zero_table_end__ = .;
     } > ROM
 
@@ -258,5 +264,25 @@ SECTIONS
 
     /* Check if data + heap + stack exceeds RAM limit */
     ASSERT(__StackLimit >= __HeapLimit, "region RAM overflowed with stack")
+
+    /* OctaRAM */
+    .octa_data :
+    {
+        Image$$RW_DATA_OCTA$$Base = .;
+        *(OCTA_DATA)
+
+        . = ALIGN(8);
+        Image$$RW_DATA_OCTA$$Limit = .;
+    } > RAM_OCTA AT > ROM
+
+    .octa_bss (NOLOAD) :
+    {
+        Image$$ZI_DATA_OCTA$$Base = .;
+
+        *(OCTA_BSS)
+
+        . = ALIGN(8);
+        Image$$ZI_DATA_OCTA$$Limit = .;
+    } > RAM_OCTA
 
 }

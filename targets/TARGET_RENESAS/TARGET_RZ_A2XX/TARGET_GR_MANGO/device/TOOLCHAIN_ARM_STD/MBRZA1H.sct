@@ -15,6 +15,9 @@
 #define __TTB_SIZE       (0x4000 + 0x1000)
 #define __APP_RAM_START  (__TTB_BASE + __TTB_SIZE)
 
+#define __OCTARAM_BASE   0x60000000
+#define __OCTARAM_SIZE   0x00800000
+
 #define __UND_STACK_SIZE 0x00000100
 #define __SVC_STACK_SIZE 0x00008000
 #define __ABT_STACK_SIZE 0x00000100
@@ -102,6 +105,16 @@ LR_IROM1 MBED_APP_START MBED_APP_SIZE       ; load region size_region
 
   ARM_LIB_STACK (__RAM_BASE + __RAM_SIZE) EMPTY -__STACK_SIZE      ; Stack region growing down
   { }
+
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  ; RAM-OCTA : OctaRAM region
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+  RW_DATA_OCTA __OCTARAM_BASE __OCTARAM_SIZE
+  { * (OCTA_DATA) }              ; Application RW data OctaRAM
+
+  ZI_DATA_OCTA +0
+  { * (OCTA_BSS) }               ; Application ZI data OctaRAM
 
 }
 

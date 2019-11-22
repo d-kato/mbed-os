@@ -25,6 +25,8 @@ define symbol __ICFEDIT_region_TTB_L2_start__   = 0x80024000;
 define symbol __ICFEDIT_region_TTB_L2_end__     = 0x80024FFF;
 define symbol __ICFEDIT_region_RAM_start__      = 0x80025000;
 define symbol __ICFEDIT_region_RAM_end__        = 0x803DAFFF;
+define symbol __ICFEDIT_region_OctaRAM_start__  = 0x60000000;
+define symbol __ICFEDIT_region_OctaRAM_end__    = 0x607FFFFF;
 
 /*-Sizes-*/
 define symbol __ICFEDIT_size_cstack__   = 0x00004000;
@@ -43,7 +45,7 @@ define region NvRAM_region        = mem:[from __ICFEDIT_region_NvRAM_start__    
 define region TTB_region          = mem:[from __ICFEDIT_region_TTB_start__          to __ICFEDIT_region_TTB_end__];
 define region TTB_L2_region       = mem:[from __ICFEDIT_region_TTB_L2_start__       to __ICFEDIT_region_TTB_L2_end__];
 define region RAM_region          = mem:[from __ICFEDIT_region_RAM_start__          to __ICFEDIT_region_RAM_end__];
-define region HyperRAM_region     = mem:[from __ICFEDIT_region_HyperRAM_start__     to __ICFEDIT_region_HyperRAM_end__];
+define region OctaRAM_region      = mem:[from __ICFEDIT_region_OctaRAM_start__      to __ICFEDIT_region_OctaRAM_end__];
 
 define block ROM_FIXED_ORDER with fixed order { ro code, ro data };
 define block NC_RAM    with fixed order, alignment = 4K { section NC_DATA, section .mirrorram, section NC_BSS };
@@ -72,3 +74,4 @@ place in TTB_L2_region   { section TTB_L2 };
 place in RAM_region      { readwrite,
                            block NC_RAM,
                            block C_RAM };
+place in OctaRAM_region  { section OCTA_DATA, section OCTA_BSS };

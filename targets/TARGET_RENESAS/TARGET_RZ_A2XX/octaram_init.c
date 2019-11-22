@@ -64,7 +64,27 @@ Private global variables and functions
 ******************************************************************************/
 void OctaRAM_Init(void)
 {
-    // TO DO : Add processing here
+
+    CPG.SCLKSEL.BIT.OCTCR = 2;
+
+    OCTA.DSR1.LONG = 0x40800000;     // TYPE=RAM, RAM size=8MByte
+
+    OCTA.CDSR.BIT.DV1TTYP = 2;       // device1=DOPI mode
+
+    OCTA.MDLR.BIT.DV1WDL = 8;        // Device1 Write DUMMY =8
+    OCTA.MDLR.BIT.DV1RDL = 8;        // Device1 Read DUMMY =8
+
+    OCTA.MDTR.BIT.DQSERAM = 6;
+
+    OCTA.DRCSTR.BIT.DVRDHI1  = 5;
+    OCTA.DRCSTR.BIT.DVRDCMD1 = 2;
+
+    OCTA.MRWCR1.BIT.D1MWCMD1 = 0x20; // write command
+    OCTA.MRWCR1.BIT.D1MRCMD1 = 0xA0; // read command
+
+    OCTA.MRWCSR.BIT.MWO1  = 1;
+    OCTA.MRWCSR.BIT.MWCL1 = 2;
+    OCTA.MRWCSR.BIT.MWAL1 = 4;
 }
 
 /* End of File */
