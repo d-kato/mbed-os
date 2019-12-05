@@ -838,6 +838,8 @@ static RAM_CODE_SEC uint32_t octaflash_rdsr(void);
 
 int32_t _octaflash_sector_erase(uint32_t addr)
 {
+    core_util_critical_section_enter();
+
     /* ---- Write Enable ---- */
     octaflash_wren();
 
@@ -866,6 +868,8 @@ int32_t _octaflash_sector_erase(uint32_t addr)
     OCTA.CWNDR = 0x00000000;
 
     while (octaflash_rdsr() & OFLASH_STATUS_WIP);
+
+    core_util_critical_section_exit();
 
     /* ==== Cleaning and invalidation of cache ==== */
     cache_control();
@@ -901,9 +905,9 @@ int32_t _octaflash_page_program(uint32_t addr, const uint8_t * buf, int32_t size
             *(volatile uint8_t*)(RZ_A2_OCTA_FLASH_NC + addr + i) = *(buf + i);
         }
 
-        core_util_critical_section_exit();
-
         while (octaflash_rdsr() & OFLASH_STATUS_WIP);
+
+        core_util_critical_section_exit();
 
         size -= program_size;
         addr += program_size;

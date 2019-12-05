@@ -64,7 +64,13 @@ void OctaFlash_Init(void)
     /*  OCTCR: 10b -> B/2phy    -> 66MHz    */
     /*  OCTCR: 01b -> P1/2phy   -> 33MHz    */
     /*  OCTCR: 00b -> P0/2phy   -> 16MHz    */
+#if (OCTAINF_XXMHZ == OCTAINF_33MHZ)
+    CPG.SCLKSEL.BIT.OCTCR = 1;           // Octa clock P1
+#elif (OCTAINF_XXMHZ == OCTAINF_66MHZ)
+    CPG.SCLKSEL.BIT.OCTCR = 2;           // Octa clock B
+#else // (OCTAINF_XXMHZ == OCTAINF_132MHZ)
     CPG.SCLKSEL.BIT.OCTCR = 3;           // Octa clock G
+#endif
 
     /* ---- PHMOM0 Setting ---- */
     GPIO.PHMOM0.BIT.HOSEL = 1;      /* Select Octa Memory Controller */
