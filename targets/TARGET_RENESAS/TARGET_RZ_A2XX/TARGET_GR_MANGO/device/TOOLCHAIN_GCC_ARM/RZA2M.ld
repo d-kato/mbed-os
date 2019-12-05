@@ -12,7 +12,11 @@
 
 #define BOOT_LOADER_ADDR    (MBED_APP_START)
 #if (MBED_APP_START == 0x50000000)
+#if(1) /* boot loader not use */
+  #define BOOT_LOADER_SIZE  (0x00000000)
+#else
   #define BOOT_LOADER_SIZE  (0x00004000)
+#endif
 #else
   #define BOOT_LOADER_SIZE  (0x00000000)
 #endif
@@ -22,12 +26,8 @@
 
 MEMORY
 {
-#if(0)
   BOOT_LOADER (rx) : ORIGIN = BOOT_LOADER_ADDR, LENGTH = BOOT_LOADER_SIZE
   ROM (rx)         : ORIGIN = ROM_ADDR,         LENGTH = ROM_SIZE
-#else
-  ROM (rx)         : ORIGIN = 0x50000000,       LENGTH = 0x1000000
-#endif
   RAM_NV (rwx)     : ORIGIN = 0x80000000,       LENGTH = 0x00020000
   L_TTB (rw)       : ORIGIN = 0x80020000,       LENGTH = 0x00005000
   RAM (rwx)        : ORIGIN = 0x80025000,       LENGTH = 0x003DB000
@@ -64,8 +64,7 @@ ENTRY(Reset_Handler)
 
 SECTIONS
 {
-/*#if (MBED_APP_START == 0x50000000)*/
-#if(0)
+#if (BOOT_LOADER_SIZE != 0x00000000)
     .boot :
     {
         KEEP(*(.boot_loader)) 
