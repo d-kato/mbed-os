@@ -576,6 +576,7 @@ typedef enum IRQn
 
 /* Virtual address */
 #define RZ_A2_HYPER_FLASH_IO               (0xA0000000uL)                        /*!< Hyper Flash area (I/O area) */
+#define RZ_A2_OCTA_FLASH_NC                (0xC0000000uL)                        /*!< Octa Flash area (Non-Cacheable) */
 
 #define GIC_DISTRIBUTOR_BASE               RZ_A2_GIC_DISTRIBUTOR_BASE
 #define GIC_INTERFACE_BASE                 RZ_A2_GIC_INTERFACE_BASE

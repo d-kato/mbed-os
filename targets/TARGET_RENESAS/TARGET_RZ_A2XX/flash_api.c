@@ -827,20 +827,150 @@ static void hyperflash_write_word(uint32_t waddr, uint16_t wdata)
 
 
 #if defined(USE_OCTAFLASH)
+#define OFLASH_STATUS_WIP     (0x00000001u)
+#define OCTACFG_BUS_WIDTH     32
+
 RAM_CODE_SEC int32_t _octaflash_sector_erase(uint32_t addr);
 RAM_CODE_SEC int32_t _octaflash_page_program(uint32_t addr, const uint8_t * buf, int32_t size);
 
+static RAM_CODE_SEC void octaflash_wren(void);
+static RAM_CODE_SEC uint32_t octaflash_rdsr(void);
+
 int32_t _octaflash_sector_erase(uint32_t addr)
 {
-    // TO DO : Add processing here
-    return -1;
+    /* ---- Write Enable ---- */
+    octaflash_wren();
+
+    /* ---- Controller and device setting register ---- */
+    OCTA.CDSR.BIT.DLFT    = 1;
+    OCTA.CDSR.BIT.DV0TTYP = 2;  /* DOPI */
+
+    /* ---- Device command register ---- */
+    OCTA.DCR.BIT.DVCMD1 = 0x21;
+    OCTA.DCR.BIT.DVCMD0 = 0xDE;
+
+    /* ---- Device address register ---- */
+    OCTA.DAR.LONG = addr;
+
+    /* ---- Device command setting register ---- */
+    OCTA.DCSR.BIT.ACDA   = 1;
+    OCTA.DCSR.BIT.DOPI   = 0;
+    OCTA.DCSR.BIT.ADLEN  = 4;
+    OCTA.DCSR.BIT.DAOR   = 1;
+    OCTA.DCSR.BIT.CMDLEN = 2;
+    OCTA.DCSR.BIT.ACDV   = 0;
+    OCTA.DCSR.BIT.DMLEN  = 0;
+    OCTA.DCSR.BIT.DALEN  = 0;
+
+    /* ---- Configure write without data register ---- */
+    OCTA.CWNDR = 0x00000000;
+
+    while (octaflash_rdsr() & OFLASH_STATUS_WIP);
+
+    /* ==== Cleaning and invalidation of cache ==== */
+    cache_control();
+
+    return 0;
 }
 
 int32_t _octaflash_page_program(uint32_t addr, const uint8_t * buf, int32_t size)
 {
-    // TO DO : Add processing here
-    return -1;
+    int32_t program_size;
+    int32_t remainder;
+
+    while (size > 0) {
+        if (size > OCTAFLASH_PAGE_SIZE) {
+            program_size = OCTAFLASH_PAGE_SIZE;
+        } else {
+            program_size = size;
+        }
+        remainder = OCTAFLASH_PAGE_SIZE - (addr % OCTAFLASH_PAGE_SIZE);
+        if ((remainder != 0) && (program_size > remainder)) {
+            program_size = remainder;
+        }
+        if (program_size > OCTACFG_BUS_WIDTH) {
+            program_size = OCTACFG_BUS_WIDTH;
+        }
+
+        core_util_critical_section_enter();
+
+        /* ---- Write Enable ---- */
+        octaflash_wren();
+
+        for (int32_t i = 0; i < program_size; i++) {
+            *(volatile uint8_t*)(RZ_A2_OCTA_FLASH_NC + addr + i) = *(buf + i);
+        }
+
+        core_util_critical_section_exit();
+
+        while (octaflash_rdsr() & OFLASH_STATUS_WIP);
+
+        size -= program_size;
+        addr += program_size;
+        buf  += program_size;
+    }
+
+    /* ==== Cleaning and invalidation of cache ==== */
+    cache_control();
+
+    return 0;
 }
+
+static void octaflash_wren(void)
+{
+    /* ---- Controller and device setting register ---- */
+    OCTA.CDSR.BIT.DLFT    = 1;
+    OCTA.CDSR.BIT.DV0TTYP = 2;  /* DOPI */
+
+    /* ---- Device command register ---- */
+    OCTA.DCR.BIT.DVCMD1 = 0x06;
+    OCTA.DCR.BIT.DVCMD0 = 0xF9;
+
+    /* ---- Device command setting register ---- */
+    OCTA.DCSR.BIT.ACDA   = 0;
+    OCTA.DCSR.BIT.DOPI   = 1;
+    OCTA.DCSR.BIT.ADLEN  = 0;
+    OCTA.DCSR.BIT.DAOR   = 0;
+    OCTA.DCSR.BIT.CMDLEN = 2;
+    OCTA.DCSR.BIT.ACDV   = 0;
+    OCTA.DCSR.BIT.DMLEN  = 0;
+    OCTA.DCSR.BIT.DALEN  = 0;
+
+    /* ---- Configure write without data register ---- */
+    OCTA.CWNDR = 0x00000000;
+}
+
+static uint32_t octaflash_rdsr(void)
+{
+    uint32_t status;
+
+    /* ---- Controller and device setting register ---- */
+    OCTA.CDSR.BIT.DLFT    = 1;
+    OCTA.CDSR.BIT.DV0TTYP = 2;  /* DOPI */
+
+    /* ---- Device command register ---- */
+    OCTA.DCR.BIT.DVCMD1 = 0x05;
+    OCTA.DCR.BIT.DVCMD0 = 0xFA;
+
+    /* ---- Device address register ---- */
+    OCTA.DAR.LONG = 0x00000000;
+
+    /* ---- Device command setting register ---- */
+    OCTA.DCSR.BIT.ACDA   = 0;
+    OCTA.DCSR.BIT.DOPI   = 1;
+    OCTA.DCSR.BIT.ADLEN  = 4;
+    OCTA.DCSR.BIT.DAOR   = 0;
+    OCTA.DCSR.BIT.CMDLEN = 2;
+    OCTA.DCSR.BIT.ACDV   = 0;
+    OCTA.DCSR.BIT.DMLEN  = 4;
+    OCTA.DCSR.BIT.DALEN  = 1;
+
+    /* ---- Configure read register ---- */
+    status = OCTA.CRR.LONG;
+
+    return status;
+}
+
 #endif /* USE_OCTAFLASH */
 
 

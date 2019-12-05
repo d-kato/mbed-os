@@ -24,13 +24,163 @@
 * File Name   : octaram_init.c
 *******************************************************************************/
 
-
 /******************************************************************************
 Includes   <System Includes> , "Project Includes"
 ******************************************************************************/
 #include "r_typedefs.h"
 #include "iodefine.h"
 #include "mbed_drv_cfg.h"
+
+
+#if(1) /******* Provisional (Remove this process when the bootloader is complete) ****** */
+#define OCTAINF_33MHZ   1
+#define OCTAINF_66MHZ   2
+#define OCTAINF_132MHZ  3
+
+#define OCTAINF_XXMHZ   OCTAINF_132MHZ
+
+#if defined(__ICCARM__)
+#define RAM_CODE_SEC    __ramfunc
+#else
+#define RAM_CODE_SEC    __attribute__((section("RAM_CODE")))
+#endif
+
+static RAM_CODE_SEC void octa_spi_wren(void);
+static RAM_CODE_SEC void octa_spi_wrcr2(uint32_t addr, uint32_t data);
+
+RAM_CODE_SEC void OctaFlash_Init(void);
+
+void OctaFlash_Init(void)
+{
+    volatile uint8_t dummy8;
+
+    /* ---- STBCR9 Setting ---- */
+    CPG.STBCR9.BIT.MSTP92 = 0;           // Octa Memory Controller runs
+    dummy8 = CPG.STBCR9.BYTE;
+    (void)dummy8;
+
+    /* ---- SCLKSEL Setting ---- */
+    /*  OCTCR: 11b -> G/2phy    -> 132MHz   */
+    /*  OCTCR: 10b -> B/2phy    -> 66MHz    */
+    /*  OCTCR: 01b -> P1/2phy   -> 33MHz    */
+    /*  OCTCR: 00b -> P0/2phy   -> 16MHz    */
+    CPG.SCLKSEL.BIT.OCTCR = 3;           // Octa clock G
+
+    /* ---- PHMOM0 Setting ---- */
+    GPIO.PHMOM0.BIT.HOSEL = 1;      /* Select Octa Memory Controller */
+
+
+    // ---------------------------------------
+    // OctaFlash
+    // ---------------------------------------
+    /* ---- Device size register 0 ---- */
+    OCTA.DSR0.BIT.DV0TYP = 0;
+    OCTA.DSR0.BIT.DV0SZ  = OCTAFLASH_SIZE;
+
+    /* ---- Set Dummy Cycle as 6 cycles ---- */
+    octa_spi_wren();
+#if (OCTAINF_XXMHZ == OCTAINF_33MHZ)
+    octa_spi_wrcr2(0x00000300, 0x7); // 6 dummy cycles @33MHz
+#elif (OCTAINF_XXMHZ == OCTAINF_66MHZ)
+    octa_spi_wrcr2(0x00000300, 0x6); // 8 dummy cycles @66MHz
+#else // (OCTAINF_XXMHZ == OCTAINF_132MHZ)
+    octa_spi_wrcr2(0x00000300, 0x3); // 14 dummy cycles @132MHz
+#endif
+
+    /* ---- Set OctaFlash to DOPI mode ---- */
+    octa_spi_wren();
+    octa_spi_wrcr2(0x00000000, 0x2); // DTR OPI mode
+
+    /* ---- Controller and device setting register ---- */
+    OCTA.CDSR.BIT.DLFT    = 1;
+    OCTA.CDSR.BIT.DV0TTYP = 2;      // Device0 =DOPI mode
+
+    /* ---- Memory Map read/write command register 0 ---- */
+    OCTA.MRWCR0.BIT.D0MWCMD1 = 0x12;
+    OCTA.MRWCR0.BIT.D0MWCMD0 = 0xED;
+    OCTA.MRWCR0.BIT.D0MRCMD1 = 0xEE;
+    OCTA.MRWCR0.BIT.D0MRCMD0 = 0x11;
+
+    /* ---- Memory Map read/write setting register ---- */
+    OCTA.MRWCSR.BIT.MWO0  = 1;      // write data order: byte1, byte0, byte3, byte2
+    OCTA.MRWCSR.BIT.MWCL0 = 2;      // 2 bytes command @Write
+    OCTA.MRWCSR.BIT.MWAL0 = 4;      // 4 bytes address @Write
+    OCTA.MRWCSR.BIT.MRO0  = 1;      // read data order: byte1, byte0, byte3, byte2
+    OCTA.MRWCSR.BIT.MRCL0 = 2;      // 2 bytes command @Read
+    OCTA.MRWCSR.BIT.MRAL0 = 4;      // 4 bytes address @Read
+
+    /* ---- Memory delay trim register ---- */
+    OCTA.MDTR.BIT.DQSEDOPI = 0x6;
+    OCTA.MDTR.BIT.DV0DEL   = 0x48;
+
+    /* ---- Memory Map dummy length register ---- */
+#if (OCTAINF_XXMHZ == OCTAINF_33MHZ)
+    OCTA.MDLR.BIT.DV0RDL = 6;       // 6 dummy cycles @33MHz
+#elif (OCTAINF_XXMHZ == OCTAINF_66MHZ)
+    OCTA.MDLR.BIT.DV0RDL = 8;       // 8 dummy cycles @66MHz
+#else // (OCTAINF_XXMHZ == OCTAINF_132MHZ)
+    OCTA.MDLR.BIT.DV0RDL = 14;      // 14 dummy cycles @132MHz
+#endif
+
+    /* ---- Device chip select timing setting register ---- */
+    OCTA.DCSTR.BIT.DVSELLO  = 0;
+    OCTA.DCSTR.BIT.DVSELHI  = 2;
+    OCTA.DCSTR.BIT.DVSELCMD = 1;
+
+    /* ---- Device Memory Map Write chip select timing setting register ---- */
+    OCTA.DWCSTR.BIT.DVWLO0 = 0;
+    OCTA.DWCSTR.BIT.DVWHI0 = 2;
+    OCTA.DWCSTR.BIT.DVWCMD0 = 1;
+
+    /* ---- Device Memory Map Read chip select timing setting register ---- */
+    OCTA.DRCSTR.BIT.DVRDLO0  = 0;
+    OCTA.DRCSTR.BIT.DVRDHI0  = 2;
+    OCTA.DRCSTR.BIT.DVRDCMD0 = 1;
+    OCTA.DRCSTR.BIT.CTR0     = 0;
+    OCTA.DRCSTR.BIT.CTRW0    = 0x20;
+}
+
+void octa_spi_wren(void)
+{
+    /* ---- Device command register ---- */
+    OCTA.DCR.BIT.DVCMD0 = 0x06;          // Write Enable
+
+    /* ---- Device command setting register ---- */
+    OCTA.DCSR.BIT.ACDA   = 0;
+    OCTA.DCSR.BIT.DOPI   = 1;
+    OCTA.DCSR.BIT.ADLEN  = 0;
+    OCTA.DCSR.BIT.DAOR   = 0;
+    OCTA.DCSR.BIT.CMDLEN = 1;
+    OCTA.DCSR.BIT.ACDV   = 0;
+    OCTA.DCSR.BIT.DMLEN  = 0;
+    OCTA.DCSR.BIT.DALEN  = 0;
+
+    /* ---- Configure write without data register ---- */
+    OCTA.CWNDR = 0x00000000;
+}
+
+void octa_spi_wrcr2(uint32_t addr, uint32_t data)
+{
+    /* ---- Device command register ---- */
+    OCTA.DCR.BIT.DVCMD0 = 0x72;          // Read Configuration Register 2
+
+    /* ---- Device address register ---- */
+    OCTA.DAR.LONG = addr;
+
+    /* ---- Device command setting register ---- */
+    OCTA.DCSR.BIT.ACDA   = 0;
+    OCTA.DCSR.BIT.DOPI   = 1;
+    OCTA.DCSR.BIT.ADLEN  = 4;
+    OCTA.DCSR.BIT.DAOR   = 0;
+    OCTA.DCSR.BIT.CMDLEN = 1;
+    OCTA.DCSR.BIT.ACDV   = 0;
+    OCTA.DCSR.BIT.DMLEN  = 0;
+    OCTA.DCSR.BIT.DALEN  = 1;
+
+    /* ---- Configure write data register ---- */
+    OCTA.CWDR.LONG = data;
+}
+#endif
 
 /******************************************************************************
 * Function Name: OctaRAM_Init
@@ -40,24 +190,33 @@ Includes   <System Includes> , "Project Includes"
 ******************************************************************************/
 void OctaRAM_Init(void)
 {
-    CPG.SCLKSEL.BIT.OCTCR = 2;           // Octa clock G
+#if(1) /******* Provisional (Remove this process when the bootloader is complete) ****** */
+    CPG.SCLKSEL.BIT.OCTCR = 2;           // Octa clock B
+#endif
 
+    /* ---- Device size register 1 ---- */
     OCTA.DSR1.BIT.DV1TYP = 1;            // TYPE=RAM
     OCTA.DSR1.BIT.DV1SZ  = OCTARAM_SIZE; // RAM size
 
+    /* ---- Controller and device setting register ---- */
     OCTA.CDSR.BIT.DV1TTYP = 2;           // Device1 =DOPI mode
 
+    /* ---- Memory Map dummy length register ---- */
     OCTA.MDLR.BIT.DV1WDL = 8;            // Device1 Write DUMMY = 8
     OCTA.MDLR.BIT.DV1RDL = 8;            // Device1 Read DUMMY = 8
 
+    /* ---- Memory delay trim register ---- */
     OCTA.MDTR.BIT.DQSERAM = 6;           // OM_DQS enable counter
 
+    /* ---- Device Memory Map Read chip select timing setting register ---- */
     OCTA.DRCSTR.BIT.DVRDHI1  = 5;        // Device1 select signal High timing setting = 6.5 clock cycles
     OCTA.DRCSTR.BIT.DVRDCMD1 = 2;        // Device1 Command execution interval = 7 clock cycles
 
+    /* ---- Memory Map read/write command register 1 ---- */
     OCTA.MRWCR1.BIT.D1MWCMD1 = 0x20;     // write command
     OCTA.MRWCR1.BIT.D1MRCMD1 = 0xA0;     // read command
 
+    /* ---- Memory Map read/write setting register ---- */
     OCTA.MRWCSR.BIT.MWO1  = 1;           // Device1 write order setting = Write order is byte1, byte0, byte3, byte2
     OCTA.MRWCSR.BIT.MWCL1 = 2;           // Device1 write command length setting = 2
     OCTA.MRWCSR.BIT.MWAL1 = 4;           // Device1 write address length setting = 4

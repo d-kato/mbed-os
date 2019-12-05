@@ -268,6 +268,7 @@ void MMU_CreateTranslationTable(void)
     uint32_t Sect_Normal_Cod; //outer & inner wb/wa, non-shareable, executable, ro, domain 0, base addr 0
     uint32_t Sect_Normal_RW;  //as Sect_Normal_Cod, but writeable and not executable
     uint32_t Sect_Device_RW;  //as Sect_Device_RO, but writeable
+    uint32_t Sect_Normal_NC;  //non-shareable, non-executable, rw, domain 0, base addr 0
 
     uint32_t Page_L1_4k  = 0x0;  //generic
     uint32_t Page_4k_Normal_RW;
@@ -292,6 +293,8 @@ void MMU_CreateTranslationTable(void)
     //Create descriptors for Vectors, RO, RW, ZI sections
     section_normal_cod(Sect_Normal_Cod, region);
     section_normal(Sect_Normal_RW, region);
+    section_normal_nc(Sect_Normal_NC, region);
+
     //Create descriptors for peripherals
     section_device_rw(Sect_Device_RW, region);
     //Create descriptors for 4k pages
@@ -326,6 +329,7 @@ void MMU_CreateTranslationTable(void)
 
     // Virtual address
     MMU_TTSection_Va (&Image$$TTB$$ZI$$Base, RZ_A2_HYPER_FLASH_IO, RZ_A2_HYPER_FLASH ,256, Sect_Device_RW);
+    MMU_TTSection_Va (&Image$$TTB$$ZI$$Base, RZ_A2_OCTA_FLASH_NC, RZ_A2_OCTA_FLASH ,256, Sect_Normal_NC);
 
     /* Set location of level 1 page table
     ; 31:14 - Translation table base addr (31:14-TTBCR.N, TTBCR.N is 0 out of reset)

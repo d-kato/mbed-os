@@ -333,9 +333,17 @@ void SystemInit (void)
     (void)dummy_buf_16b;
 }
 
+#if(1) /******* Provisional (Remove this process when the bootloader is complete) ****** */
+extern void OctaFlash_Init(void);
+#endif
+
 void mbed_sdk_init(void) {
     L1C_CleanDCacheAll();
     L1C_InvalidateICacheAll();
+
+#if(1) /******* Provisional (Remove this process when the bootloader is complete) ****** */
+    OctaFlash_Init();
+#endif
 }
 
 void soft_reset(void) {
