@@ -225,7 +225,7 @@ __STATIC_INLINE void MMU_TTSection_Va(uint32_t *ttb, uint32_t vaddress, uint32_t
 
 static void MMU_TTPage4k_local(uint32_t *ttb, uint32_t start_address, uint32_t size, uint32_t descriptor_l1, uint32_t *ttb_l2, uint32_t descriptor_l2)
 {
-    uint32_t base_address  = start_address & 0xFFF00000;
+    uint32_t base_address  = start_address & 0xFF000000;
     uint32_t section_count = (start_address & 0x00F00000) >> 20;
     uint32_t rest_count    = (size + OFFSET_4K - 1) / OFFSET_4K;
     uint32_t count;
