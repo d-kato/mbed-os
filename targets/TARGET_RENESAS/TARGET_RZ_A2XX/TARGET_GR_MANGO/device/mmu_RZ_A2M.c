@@ -313,7 +313,7 @@ void MMU_CreateTranslationTable(void)
     MMU_TTSection (&Image$$TTB$$ZI$$Base, RZ_A2_SPI_IO            ,256, Sect_Normal_Cod);
     MMU_TTSection (&Image$$TTB$$ZI$$Base, RZ_A2_HYPER_FLASH       ,256, Sect_Normal_Cod);
     MMU_TTSection (&Image$$TTB$$ZI$$Base, RZ_A2_HYPER_RAM         ,256, Sect_Normal_RW);
-    MMU_TTSection (&Image$$TTB$$ZI$$Base, RZ_A2_OCTA_FLASH        ,256, Sect_Normal_RW);
+    MMU_TTSection (&Image$$TTB$$ZI$$Base, RZ_A2_OCTA_FLASH        ,256, Sect_Normal_Cod);
     MMU_TTSection (&Image$$TTB$$ZI$$Base, RZ_A2_OCTA_RAM          ,256, Sect_Normal_RW);
     MMU_TTSection (&Image$$TTB$$ZI$$Base, RZ_A2_PERIPH_BASE0      ,384, Sect_Device_RW);
     MMU_TTSection (&Image$$TTB$$ZI$$Base, RZ_A2_PERIPH_BASE1      ,128, Sect_Device_RW);

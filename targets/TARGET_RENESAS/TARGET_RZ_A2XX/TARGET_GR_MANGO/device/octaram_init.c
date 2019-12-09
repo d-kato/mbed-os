@@ -226,6 +226,9 @@ void OctaRAM_Init(void)
     OCTA.MRWCSR.BIT.MWO1  = 1;           // Device1 write order setting = Write order is byte1, byte0, byte3, byte2
     OCTA.MRWCSR.BIT.MWCL1 = 2;           // Device1 write command length setting = 2
     OCTA.MRWCSR.BIT.MWAL1 = 4;           // Device1 write address length setting = 4
+    OCTA.MRWCSR.BIT.MRO1  = 1;           // Device1 read order setting = Read order is byte1, byte0, byte3, byte2
+    OCTA.MRWCSR.BIT.MRCL1 = 2;           // Device1 read command length setting = 2
+    OCTA.MRWCSR.BIT.MRAL1 = 4;           // Device1 read address length setting = 4
 }
 
 /* End of File */
