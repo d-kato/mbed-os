@@ -86,6 +86,15 @@ typedef enum {
     // Standardized button names
     BUTTON1 = USER_BUTTON0,
 
+    // Raspberry Pi Pin Names
+    SPI_MOSI = P8_6,
+    SPI_MISO = P8_5,
+    SPI_SCKL = P8_7,
+    SPI_SSL  = P8_4,
+
+    UART_TXD = P4_2,
+    UART_RXD = P4_1,
+
     // Not connected
     NC = (int)0xFFFFFFFF
 } PinName;
