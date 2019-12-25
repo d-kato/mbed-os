@@ -188,6 +188,28 @@ void octa_spi_wrcr2(uint32_t addr, uint32_t data)
 }
 #endif
 
+static void octa_ram_mode_register_write(uint16_t config)
+{
+    /* ---- Device command register ---- */
+    OCTA.DCR.BIT.DVCMD1 = 0x40;          // Mode Register Write
+
+    /* ---- Device address register ---- */
+    OCTA.DAR.LONG = 0x00040000;
+
+    /* ---- Device command setting register ---- */
+    OCTA.DCSR.BIT.ACDA   = 0;
+    OCTA.DCSR.BIT.DOPI   = 0;
+    OCTA.DCSR.BIT.ADLEN  = 4;
+    OCTA.DCSR.BIT.DAOR   = 1;
+    OCTA.DCSR.BIT.CMDLEN = 2;
+    OCTA.DCSR.BIT.ACDV   = 1;
+    OCTA.DCSR.BIT.DMLEN  = 0;
+    OCTA.DCSR.BIT.DALEN  = 2;
+
+    /* ---- Configure write data register ---- */
+    OCTA.CWDR.LONG = (uint32_t)config;
+}
+
 /******************************************************************************
 * Function Name: OctaRAM_Init
 * Description  :
@@ -196,6 +218,12 @@ void octa_spi_wrcr2(uint32_t addr, uint32_t data)
 ******************************************************************************/
 void OctaRAM_Init(void)
 {
+    volatile uint8_t dummy8;
+
+    CPG.STBCR9.BIT.MSTP92 = 0;
+    dummy8 = CPG.STBCR9.BYTE;
+    (void)dummy8;
+
 #if(1) /******* Provisional (Remove this process when the bootloader is complete) ****** */
     CPG.SCLKSEL.BIT.OCTCR = 2;           // Octa clock B
 #endif
@@ -208,19 +236,27 @@ void OctaRAM_Init(void)
     OCTA.CDSR.BIT.DV1TTYP = 2;           // Device1 =DOPI mode
 
     /* ---- Memory Map dummy length register ---- */
-    OCTA.MDLR.BIT.DV1WDL = 8;            // Device1 Write DUMMY = 8
-    OCTA.MDLR.BIT.DV1RDL = 8;            // Device1 Read DUMMY = 8
+    OCTA.MDLR.BIT.DV1WDL = 5;            // Device1 Write DUMMY = 5
+    OCTA.MDLR.BIT.DV1RDL = 5;            // Device1 Read DUMMY = 5
 
     /* ---- Memory delay trim register ---- */
+    OCTA.MDTR.BIT.DV1DEL  = 40;          // Device1 Delay 40
     OCTA.MDTR.BIT.DQSERAM = 6;           // OM_DQS enable counter
 
     /* ---- Device Memory Map Read chip select timing setting register ---- */
+    OCTA.DRCSTR.BIT.DVRDLO1  = 0;        // Device1 select signal High timing setting = 1.5 clock cycles
     OCTA.DRCSTR.BIT.DVRDHI1  = 5;        // Device1 select signal High timing setting = 6.5 clock cycles
-    OCTA.DRCSTR.BIT.DVRDCMD1 = 2;        // Device1 Command execution interval = 7 clock cycles
+    OCTA.DRCSTR.BIT.DVRDCMD1 = 0;        // Device1 Command execution interval = 2 clock cycles
+
+    /* ---- Device Memory Map Write chip select timing setting register ---- */
+    OCTA.DWCSTR.BIT.DVWLO1   = 0;        // Device1 select signal High timing setting = 1.5 clock cycles
+    OCTA.DWCSTR.BIT.DVWHI1   = 1;        // Device1 select signal High timing setting = 2.5 clock cycles
+    OCTA.DWCSTR.BIT.DVWCMD1  = 0;        // Device1 Command execution interval = 2 clock cycles
 
     /* ---- Memory Map read/write command register 1 ---- */
-    OCTA.MRWCR1.BIT.D1MWCMD1 = 0x20;     // write command
-    OCTA.MRWCR1.BIT.D1MRCMD1 = 0xA0;     // read command
+    /* Wrap Burst */
+    OCTA.MRWCR1.BIT.D1MWCMD1 = 0x00;     // write command
+    OCTA.MRWCR1.BIT.D1MRCMD1 = 0x80;     // read command
 
     /* ---- Memory Map read/write setting register ---- */
     OCTA.MRWCSR.BIT.MWO1  = 1;           // Device1 write order setting = Write order is byte1, byte0, byte3, byte2
@@ -229,6 +265,18 @@ void OctaRAM_Init(void)
     OCTA.MRWCSR.BIT.MRO1  = 1;           // Device1 read order setting = Read order is byte1, byte0, byte3, byte2
     OCTA.MRWCSR.BIT.MRCL1 = 2;           // Device1 read command length setting = 2
     OCTA.MRWCSR.BIT.MRAL1 = 4;           // Device1 read address length setting = 4
+
+    GPIO.PHMOM0.BIT.HOSEL = 1;           // Select Octa Memory Controller
+
+    uint16_t config = 0xA021;            // CR[15]    Deep Power Down        : 1    - Normal
+                                         // CR[14:12] Driver Strength        : 010  - 52ohms
+                                         // CR[11:9]  Reserved               : 000
+                                         // CR[8]     DQSM Read Pre-Cycle    : 0    - 0 clock
+                                         // CR[7:4]   Latency Counter        : 0010 - 5 clocks
+                                         // CR[3]     Initial Access Latency : 0    - Variable Latency
+                                         // CR[2]     CLK2 Input             : 0    - No Support
+                                         // CR[1:0]   Bust Wrap Length       : 01   - 64 bytes
+    octa_ram_mode_register_write(config);
 }
 
 /* End of File */
