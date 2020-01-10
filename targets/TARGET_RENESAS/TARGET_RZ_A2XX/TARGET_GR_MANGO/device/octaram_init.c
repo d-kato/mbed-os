@@ -130,12 +130,12 @@ void OctaFlash_Init(void)
 
     /* ---- Device chip select timing setting register ---- */
     OCTA.DCSTR.BIT.DVSELLO  = 0;
-    OCTA.DCSTR.BIT.DVSELHI  = 2;
-    OCTA.DCSTR.BIT.DVSELCMD = 1;
+    OCTA.DCSTR.BIT.DVSELHI  = 5;
+    OCTA.DCSTR.BIT.DVSELCMD = 0;
 
     /* ---- Device Memory Map Write chip select timing setting register ---- */
-    OCTA.DWCSTR.BIT.DVWLO0 = 0;
-    OCTA.DWCSTR.BIT.DVWHI0 = 2;
+    OCTA.DWCSTR.BIT.DVWLO0  = 0;
+    OCTA.DWCSTR.BIT.DVWHI0  = 2;
     OCTA.DWCSTR.BIT.DVWCMD0 = 1;
 
     /* ---- Device Memory Map Read chip select timing setting register ---- */
