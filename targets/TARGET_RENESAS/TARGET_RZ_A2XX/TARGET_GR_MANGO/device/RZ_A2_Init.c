@@ -33,6 +33,7 @@ Includes   <System Includes> , "Project Includes"
 #include "MBRZA2M.h"
 #include "RZ_A2_Init.h"
 #include "pinmap.h"
+#include "gpio_api.h"
 
 /******************************************************************************
 Typedef definitions
@@ -142,6 +143,12 @@ void RZ_A2_InitBus(void)
     /*************************************************************************/
 
     pin_function(P6_5, 4); // AUDIO_XOUT
+
+    /* PK_5(RST_HDMI) port_out Level=High */
+    gpio_t wk_gpio;
+    gpio_init(&wk_gpio, PK_5);
+    gpio_write(&wk_gpio, 1);
+    gpio_dir(&wk_gpio, PIN_OUTPUT);
 
     return;
 }
