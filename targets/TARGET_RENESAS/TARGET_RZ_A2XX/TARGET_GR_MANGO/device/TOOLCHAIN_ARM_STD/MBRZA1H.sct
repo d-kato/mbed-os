@@ -33,6 +33,16 @@
   #define MBED_APP_SIZE 0x1000000
 #endif
 
+#if (MBED_APP_START == 0x50000000)
+#if(1) /* boot loader not use */
+  #define BOOT_LOADER_SIZE  (0x00000000)
+#else
+  #define BOOT_LOADER_SIZE  (0x00004000)
+#endif
+#else
+  #define BOOT_LOADER_SIZE  (0x00000000)
+#endif
+
 LOAD_TTB    __TTB_BASE __TTB_SIZE ; Page 0 of On-Chip Data Retention RAM
 {
     TTB     +0 EMPTY 0x4000            
@@ -50,7 +60,7 @@ LOAD_NV     __NV_RAM_BASE __NV_RAM_SIZE   ; Page 0 of On-Chip Data Retention RAM
 
 LR_IROM1 MBED_APP_START MBED_APP_SIZE       ; load region size_region
 {
-#if (MBED_APP_START == 0x50000000)
+#if (BOOT_LOADER_SIZE != 0x00000000)
   BOOT_LOADER_BEGIN MBED_APP_START FIXED
   {
     * (BOOT_LOADER)
