@@ -109,7 +109,7 @@ void RZA_IO_RegWrite_16(volatile uint16_t * ioreg, uint16_t write_value, uint16_
  *              : uint32_t mask             : Mask value for the IO register (Target bit : "1")
  * Return Value : None
  *********************************************************************************************************************/
-void RZA_IO_RegWrite_32(volatile uint32_t * ioreg, uint32_t write_value, uint32_t shift, uint32_t mask)
+void RZA_IO_RegWrite_32(volatile unsigned long * ioreg, uint32_t write_value, uint32_t shift, uint32_t mask)
 {
     uint32_t reg_value;
 
@@ -198,7 +198,7 @@ uint16_t RZA_IO_RegRead_16(volatile uint16_t * ioreg, uint16_t shift, uint32_t m
  *              : uint32_t mask             : Mask bit for the IO register (Target bit: "1")
  * Return Value : uint32_t : Value of the obtained target bit
  *********************************************************************************************************************/
-uint32_t RZA_IO_RegRead_32(volatile uint32_t * ioreg, uint32_t shift, uint32_t mask)
+uint32_t RZA_IO_RegRead_32(volatile unsigned long * ioreg, uint32_t shift, uint32_t mask)
 {
     uint32_t reg_value;
 

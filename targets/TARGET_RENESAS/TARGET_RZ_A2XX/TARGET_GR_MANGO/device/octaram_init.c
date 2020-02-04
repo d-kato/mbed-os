@@ -268,8 +268,8 @@ void OctaRAM_Init(void)
 
     GPIO.PHMOM0.BIT.HOSEL = 1;           // Select Octa Memory Controller
 
-    uint16_t config = 0xA021;            // CR[15]    Deep Power Down        : 1    - Normal
-                                         // CR[14:12] Driver Strength        : 010  - 52ohms
+    uint16_t config = 0x8021;            // CR[15]    Deep Power Down        : 1    - Normal
+                                         // CR[14:12] Driver Strength        : 000  - 100ohms
                                          // CR[11:9]  Reserved               : 000
                                          // CR[8]     DQSM Read Pre-Cycle    : 0    - 0 clock
                                          // CR[7:4]   Latency Counter        : 0010 - 5 clocks

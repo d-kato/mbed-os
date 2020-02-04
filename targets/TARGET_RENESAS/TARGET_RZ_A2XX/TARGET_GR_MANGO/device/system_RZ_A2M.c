@@ -30,6 +30,7 @@
 #include "RZ_A2_Init.h"
 #include "irq_ctrl.h"
 #include "mbed_drv_cfg.h"
+#include "r_cache_lld_rza2m.h"
 
 extern void HyperRAM_Init(void);
 extern void OctaRAM_Init(void);
@@ -304,15 +305,17 @@ void SystemInit (void)
     // Enable MMU
     MMU_Enable();
 
-    // Enable Caches
-    L1C_EnableCaches();
-    L1C_EnableBTAC();
-
 #if (__L2C_PRESENT == 1) 
-    L2C_InvAllByWay();
-    // Enable L2C
-    L2C_Enable();
+    /* Initial setting of the level 2 cache */
+    R_CACHE_L2Init();
+
+    /* DRP L2 Cache ON */
+    PRR.AXIBUSCTL4.BIT.DRPARCACHE = 0xF;
+    PRR.AXIBUSCTL4.BIT.DRPAWCACHE = 0xF; 
 #endif
+
+    /* Initial setting of the level 1 cache */
+    R_CACHE_L1Init();
 
     // IRQ Initialize
     IRQ_Initialize();

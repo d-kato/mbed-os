@@ -5514,8 +5514,11 @@
         "extra_labels_add": ["RZA2M", "MBRZA2M", "RZ_A2_EMAC"],
         "device_has_add": ["USBDEVICE", "EMAC", "FLASH"],
         "release_versions": ["2", "5"],
-        "device_name": "R7S921053_OF",
-        "bootloader_supported": true
+        "device_name": "R7S921053",
+        "bootloader_supported": true,
+        "mbed_rom_start"        : "0x50000000",
+        "mbed_rom_size"         : "0x1000000",
+        "sectors": [[1342177280,4096]]
     },
     "RZ_A2M_EVB": {
         "inherits": ["RZ_A2XX"],
@@ -5523,15 +5526,21 @@
         "device_has_add": ["USBDEVICE", "EMAC", "FLASH"],
         "release_versions": ["2", "5"],
         "device_name": "R7S921053",
-        "bootloader_supported": true
+        "bootloader_supported": true,
+        "mbed_rom_start"        : "0x20000000",
+        "mbed_rom_size"         : "0x4000000",
+        "sectors": [[536870912,4096]]
     },
     "RZ_A2M_EVB_HF": {
         "inherits": ["RZ_A2XX"],
         "extra_labels_add": ["RZA2M", "MBRZA2M", "RZ_A2_EMAC"],
         "device_has_add": ["USBDEVICE", "EMAC", "FLASH"],
         "release_versions": ["2", "5"],
-        "device_name": "R7S921053_HF",
-        "bootloader_supported": true
+        "device_name": "R7S921053",
+        "bootloader_supported": true,
+        "mbed_rom_start"        : "0x30000000",
+        "mbed_rom_size"         : "0x4000000",
+        "sectors": [[805306368,262144]]
     },
     "RZ_A2M_SBEV": {
         "inherits": ["RZ_A2XX"],
@@ -5539,7 +5548,10 @@
         "device_has_add": ["USBDEVICE", "EMAC", "FLASH"],
         "release_versions": ["2", "5"],
         "device_name": "R7S921053",
-        "bootloader_supported": true
+        "bootloader_supported": true,
+        "mbed_rom_start"        : "0x20000000",
+        "mbed_rom_size"         : "0x800000",
+        "sectors": [[536870912,4096]]
     },
     "SEMB1402": {
         "inherits": ["RZ_A2XX"],
@@ -5547,7 +5559,10 @@
         "device_has_add": ["USBDEVICE", "FLASH"],
         "release_versions": ["2", "5"],
         "device_name": "R7S921053",
-        "bootloader_supported": true
+        "bootloader_supported": true,
+        "mbed_rom_start"        : "0x20000000",
+        "mbed_rom_size"         : "0x800000",
+        "sectors": [[536870912,4096]]
     },
     "MAXWSNENV": {
         "inherits": ["Target"],

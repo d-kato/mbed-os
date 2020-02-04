@@ -26,6 +26,9 @@
 * $Date::                           $
 * @brief        RZ_A2 HyperFlash boot loader
 ******************************************************************************/
+#if(1) /* No boot loader is used */
+const char  * boot_loader = (char  *)0x50000000;
+#else
 
 #if !defined(APPLICATION_ADDR)
     #define APPLICATION_ADDR       0x50000000
@@ -53,3 +56,4 @@ const char boot_loader[]  __attribute__ ((section(".boot_loader"), used)) =
 #endif
 
 #endif /* APPLICATION_ADDR */
+#endif

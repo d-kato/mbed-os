@@ -12,7 +12,7 @@
 
 #define BOOT_LOADER_ADDR    (MBED_APP_START)
 #if (MBED_APP_START == 0x50000000)
-#if(1) /* boot loader not use */
+#if(1) /* No boot loader is used */
   #define BOOT_LOADER_SIZE  (0x00000000)
 #else
   #define BOOT_LOADER_SIZE  (0x00004000)
