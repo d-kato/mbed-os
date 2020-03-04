@@ -51,6 +51,7 @@ void rtc_init(void)
     RTC_BCNT1.RCR4.BIT.RCKSEL = 0;
     RTC_BCNT1.RCR3.BIT.RTCEN  = 1;
 #elif defined(USE_EXTAL_CLK)
+    PMG.RTCXTALSEL.BIT.RTC1XT = 1;
     RTC_BCNT1.RCR4.BIT.RCKSEL = 1;
     RTC_BCNT1.RCR3.BIT.RTCEN  = 0;
 #endif
@@ -101,6 +102,9 @@ void rtc_init(void)
  */
 void rtc_free(void)
 {
+#if defined(USE_EXTAL_CLK)
+    PMG.RTCXTALSEL.BIT.RTC1XT = 0;
+#endif
 }
 
 
