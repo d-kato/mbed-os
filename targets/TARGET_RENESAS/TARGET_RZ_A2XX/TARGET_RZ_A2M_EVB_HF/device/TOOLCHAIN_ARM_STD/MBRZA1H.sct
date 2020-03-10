@@ -42,12 +42,6 @@ LOAD_TTB    __TTB_BASE __TTB_SIZE ; Page 0 of On-Chip Data Retention RAM
     { }                           ; Level-2 Translation Table for MMU
 }
 
-LOAD_NV     __NV_RAM_BASE __NV_RAM_SIZE   ; Page 0 of On-Chip Data Retention RAM
-{
-    NV      +0 UNINIT
-    { * (NV_DATA) }               ; Application RW data Non volatile area
-}
-
 LR_IROM1 MBED_APP_START MBED_APP_SIZE       ; load region size_region
 {
 #if (MBED_APP_START == 0x30000000)
@@ -73,6 +67,9 @@ LR_IROM1 MBED_APP_START MBED_APP_SIZE       ; load region size_region
 
   RO_DATA    +0
   { * (+RO-DATA) }              ; Application RO data (.constdata)
+
+  NV      __NV_RAM_BASE UNINIT __NV_RAM_SIZE   ; Page 0 of On-Chip Data Retention RAM
+  { * (.bss.NoInit) }           ; Application RW data Non volatile area
 
   RAM_CODE   __APP_RAM_START
   { * (RAM_CODE) }              ; Application RAM_CODE
